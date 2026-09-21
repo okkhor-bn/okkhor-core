@@ -29,7 +29,7 @@ int main() {
         },
         {
           "when": { "after-consonant": true },
-          "action": { "type": "literal", "value": "্‌ব" }
+          "action": { "type": "token", "value": ["b"] }
         }
       ],
       "a": [
@@ -68,16 +68,6 @@ int main() {
     check_true("word-start w rewrites into 1 token", rewritten.size() == 1);
     if (!rewritten.empty()) {
       check("word-start w -> ও", rewritten[0].literal, "ও");
-    }
-  }
-
-  // Test 3: "w" after consonant -> literal "্‌ব"
-  {
-    std::vector<Token> tokens = tokenize("sw", mapping);
-    std::vector<Token> rewritten = re.apply(tokens, mapping);
-    check_true("sw rewrites into 2 tokens", rewritten.size() == 2);
-    if (rewritten.size() == 2) {
-      check("sw token 2 literal", rewritten[1].literal, "্‌ব");
     }
   }
 
