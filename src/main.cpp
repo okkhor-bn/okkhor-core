@@ -16,13 +16,27 @@ namespace {
 void describe(const okkhor::Engine &engine, const std::string &input) {
   std::cout << "input       : " << input << "\n";
 
-  std::cout << "tokens      :";
-  for (const okkhor::Token &t : engine.tokenize_input(input))
+  // Step 1: Tokenize
+  std::vector<okkhor::Token> raw_tokens = engine.tokenize_input(input);
+
+  std::cout << "raw tokens  :";
+  for (const okkhor::Token &t : raw_tokens)
     std::cout << " " << okkhor::token_type_name(t.type) << "(" << t.latin
               << ")";
   std::cout << "\n";
 
-  const okkhor::Document doc = engine.analyze(input);
+  // Step 2: Apply contextual rules
+  std::vector<okkhor::Token> rewritten_tokens =
+      engine.rule_engine().apply(raw_tokens, engine.mapping());
+
+  std::cout << "rule tokens :";
+  for (const okkhor::Token &t : rewritten_tokens)
+    std::cout << " " << okkhor::token_type_name(t.type) << "(" << t.latin
+              << ")";
+  std::cout << "\n";
+
+  // Step 3: Parse rewritten tokens into AST / Document structure
+  const okkhor::Document doc = okkhor::parse(rewritten_tokens);
   std::cout << "structure   :";
   for (const okkhor::Element &e : doc) {
     std::visit(

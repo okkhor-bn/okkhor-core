@@ -11,6 +11,8 @@ else()
   add_compile_options(-Wall -Wextra)
 endif()
 
+enable_testing()
+
 # ---- core library: tokenizer + algebra + renderer -----------------------------
 add_library(okkhor_core
   src/json.cpp
@@ -20,6 +22,7 @@ add_library(okkhor_core
   src/parser.cpp
   src/renderer.cpp
   src/okkhor.cpp
+  src/rules.cpp
 )
 target_include_directories(okkhor_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_definitions(okkhor_core PUBLIC
@@ -46,3 +49,9 @@ add_executable(phonetic_tests tests/phonetic_tests.cpp)
 target_link_libraries(phonetic_tests PRIVATE okkhor_core)
 target_include_directories(phonetic_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 add_test(NAME phonetic COMMAND phonetic_tests)
+
+
+add_executable(rules_tests tests/rules_tests.cpp)
+target_link_libraries(rules_tests PRIVATE okkhor_core)
+target_include_directories(rules_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_test(NAME rules COMMAND rules_tests)

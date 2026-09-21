@@ -1,0 +1,60 @@
+{
+  "rules": {
+    "kkh": [
+      {
+        "when": {
+          "always": true
+        },
+        "action": {
+          "type": "token",
+          "value": ["k", "Sh"]
+        }
+      }
+    ],
+
+    "w": [
+      {
+        "when": {
+          "word-start": true
+        },
+        "action": {
+          "type": "literal",
+          "value": "ও"
+        }
+      },
+      {
+        "when": {
+          "after-consonant": true
+        },
+        "action": {
+          "type": "token",
+          "value": ["b"]
+        }
+      }
+    ],
+
+    "a": [
+      {
+        "when": {
+          "after-vowel": true
+        },
+        "action": {
+          "type": "literal",
+          "value": "আ"
+        }
+      }
+    ],
+
+    "t''": [
+      {
+        "when": {
+          "always": true
+        },
+        "action": {
+          "type": "literal",
+          "value": "ৎ"
+        }
+      }
+    ]
+  }
+}

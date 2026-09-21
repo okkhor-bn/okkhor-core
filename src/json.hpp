@@ -20,10 +20,19 @@ struct Value {
   bool is_object() const { return std::holds_alternative<Object>(v); }
   bool is_string() const { return std::holds_alternative<std::string>(v); }
   bool is_number() const { return std::holds_alternative<double>(v); }
+  bool is_array() const { return std::holds_alternative<Array>(v); }
+  bool is_bool() const { return std::holds_alternative<bool>(v); }
 
   const Object &as_object() const { return std::get<Object>(v); }
+  const Array &as_array() const { return std::get<Array>(v); }
   const std::string &as_string() const { return std::get<std::string>(v); }
   double as_number() const { return std::get<double>(v); }
+  bool as_bool() const { return std::get<bool>(v); }
+
+  bool bool_or(const std::string &key, bool fallback) const {
+    const Value *x = find(key);
+    return (x && x->is_bool()) ? x->as_bool() : fallback;
+  }
 
   const Value *find(const std::string &key) const {
     if (!is_object())

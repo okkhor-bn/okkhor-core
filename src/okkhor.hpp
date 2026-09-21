@@ -1,33 +1,50 @@
 #pragma once
 // Façade over the pipeline:
-//   Latin -> tokenizer -> parser (algebra) -> renderer -> Bangla UTF-8
+//   Latin -> tokenizer -> rule engine -> parser (algebra) -> renderer -> Bangla
+//   UTF-8
 #include <string>
 #include <vector>
+#include  <iostream>
 
 #include "mapping.hpp"
 #include "orthography.hpp"
 #include "parser.hpp"
 #include "renderer.hpp"
+#include "rules.hpp"
 #include "tokenizer.hpp"
+
 
 namespace okkhor {
 
 class Engine {
 public:
-  explicit Engine(Mapping mapping)
-      : mapping_(std::move(mapping)), renderer_(mapping_) {}
+  Engine(Mapping mapping, RuleEngine rule_engine)
+      : mapping_(std::move(mapping)), rule_engine_(std::move(rule_engine)),
+        renderer_(mapping_) {}
 
   static Engine from_data_dir(const std::string &data_dir) {
-    return Engine(Mapping::load(data_dir));
+    Mapping m = Mapping::load(data_dir);
+
+    RuleEngine re;
+    std::string rules_path =
+        data_dir.empty() ? "rules.json" : data_dir + "/rules.json";
+    
+    // Load contextual rules into RuleEngine
+    re.load_file(rules_path, m);
+
+    return Engine(std::move(m), std::move(re));
   }
 
   std::vector<Token> tokenize_input(const std::string &input) const {
     return tokenize(input, mapping_);
   }
 
-  // The internal representation, for tests and tooling.
+  // The internal representation, incorporating contextual rule transformations
   Document analyze(const std::string &input) const {
-    return parse(tokenize(input, mapping_));
+    std::vector<Token> raw_tokens = tokenize(input, mapping_);
+    std::vector<Token> rewritten_tokens =
+        rule_engine_.apply(raw_tokens, mapping_);
+    return parse(rewritten_tokens);
   }
 
   std::string transliterate(const std::string &input) const {
@@ -35,10 +52,12 @@ public:
   }
 
   const Mapping &mapping() const { return mapping_; }
+  const RuleEngine &rule_engine() const { return rule_engine_; }
   const Renderer &renderer() const { return renderer_; }
 
 private:
   Mapping mapping_;
+  RuleEngine rule_engine_;
   Renderer renderer_;
 };
 

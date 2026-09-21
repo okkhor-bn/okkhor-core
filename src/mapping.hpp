@@ -55,9 +55,9 @@ public:
   int vowel_id(const std::string &latin) const;
   int consonant_id(const std::string &latin) const;
 
-private:
   void add_rule(const std::string &key, Rule rule);
 
+private:
   std::unordered_map<std::string, Rule> rules_;
   std::vector<VowelEntry> vowels_;
   std::vector<ConsonantEntry> consonants_;
