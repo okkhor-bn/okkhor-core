@@ -39,16 +39,16 @@ The mapping data is copied next to the binary; the executable also honours
 The equations in the specification are the source of truth, and the code is a
 direct transcription of them:
 
-| equation | implementation |
-| --- | --- |
-| `C → BC + H + অ` | `make_consonant` (the inherent `অ` is a state, never a character) |
-| `C + V → BC + DV` | `add_vowel` |
-| `C + C → BC + DC + VN` | `add_consonant` |
-| `C…C + V → BC + DC…DC + DV` | repeated `add_consonant`, then `add_vowel` |
-| `C + ,, → BC + H` | `terminate_with_hasanta` |
-| `` ` `` ` → VC` | `make_virtual_consonant` |
-| `` ` `` ` + V → VC + DV` | `make_virtual_consonant` + `add_vowel` |
-| `H + অ → VN` | the dependent form of `o` is the empty string in `vowels.json` |
+| equation                    | implementation                                                    |
+| --------------------------- | ----------------------------------------------------------------- |
+| `C → BC + H + অ`            | `make_consonant` (the inherent `অ` is a state, never a character) |
+| `C + V → BC + DV`           | `add_vowel`                                                       |
+| `C + C → BC + DC + VN`      | `add_consonant`                                                   |
+| `C…C + V → BC + DC…DC + DV` | repeated `add_consonant`, then `add_vowel`                        |
+| `C + ,, → BC + H`           | `terminate_with_hasanta`                                          |
+| `` ` `` ` → VC`             | `make_virtual_consonant`                                          |
+| `` ` `` ` + V → VC + DV`    | `make_virtual_consonant` + `add_vowel`                            |
+| `H + অ → VN`                | the dependent form of `o` is the empty string in `vowels.json`    |
 
 The algebraic operations return `false` when they are not defined for a unit in
 its current state (a second vowel, a consonant after a vowel, anything after an

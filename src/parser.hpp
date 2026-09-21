@@ -7,6 +7,6 @@
 
 namespace okkhor {
 
-Document parse(const std::vector<Token>& tokens);
+Document parse(const std::vector<Token> &tokens);
 
-}  // namespace okkhor
+} // namespace okkhor

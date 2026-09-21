@@ -32,7 +32,7 @@ target_link_libraries(okkhor PRIVATE okkhor_core)
 # Keep a copy of the mapping data next to the binary.
 add_custom_command(TARGET okkhor POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${CMAKE_CURRENT_SOURCE_DIR}/data $<TARGET_FILE_DIR:okkhor>/data)
+  ${CMAKE_CURRENT_SOURCE_DIR}/data $<TARGET_FILE_DIR:okkhor>/data)
 
 # ---- tests --------------------------------------------------------------------
 enable_testing()
