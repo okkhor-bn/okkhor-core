@@ -12,34 +12,29 @@
 namespace okkhor {
 
 struct VowelEntry {
-  std::string latin;       // canonical Latin key
+  std::string canonical_key;       // canonical Latin key
   std::string independent; // "অ", "আ", ...
   std::string dependent;   // "", "া", ...
   std::vector<std::string> aliases;
 };
 
 struct ConsonantEntry {
-  std::string latin; // canonical Latin key
+  std::string canonical_key; // canonical Latin key
   std::string base;  // "ক"
   std::string fola;  // optional rendering of dcons inside conjunct
   std::vector<std::string> aliases;
 };
 
-struct AccentEntry {
-  std::string latin; // canonical Latin key
-  std::string sign;  // "ং", "ঁ", "ঃ"
+struct OtherEntry {
+  std::string canonical_key; // canonical Latin key
+  std::string value;  // "ং", "ঁ", "ঃ"
   std::vector<std::string> aliases;
 };
 
 // What a matched Latin key means.
 struct Rule {
   TokenType type = TokenType::Unknown;
-
-  // Canonical Latin key represented by this rule.
-  // For example:
-  //   "S" -> "sh"
   std::string canonical_key;
-
   std::string literal;
 };
 
@@ -57,7 +52,7 @@ public:
   // Canonical-key lookup.
   const VowelEntry *vowel(const std::string &canonical_key) const;
   const ConsonantEntry *consonant(const std::string &canonical_key) const;
-  const AccentEntry *accent(const std::string &canonical_key) const;
+  const OtherEntry *accent(const std::string &canonical_key) const;
 
   const std::unordered_map<std::string, VowelEntry> &vowels() const {
     return vowels_;
@@ -67,11 +62,14 @@ public:
     return consonants_;
   }
 
-  const std::unordered_map<std::string, AccentEntry> &accents() const {
-    return accents_;
+  const std::unordered_map<std::string, OtherEntry> &accents() const {
+    return others_;
   }
 
+
   void add_rule(const std::string &key, Rule rule);
+
+  void set_rule(const std::string &key, Rule rule);
 
 private:
   std::unordered_map<std::string, Rule> rules_;
@@ -79,7 +77,7 @@ private:
   // Keyed by canonical Latin representation.
   std::unordered_map<std::string, VowelEntry> vowels_;
   std::unordered_map<std::string, ConsonantEntry> consonants_;
-  std::unordered_map<std::string, AccentEntry> accents_;
+  std::unordered_map<std::string, OtherEntry> others_;
 
   std::size_t max_key_len_ = 1;
 };

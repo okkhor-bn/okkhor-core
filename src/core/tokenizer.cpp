@@ -47,6 +47,8 @@ const char *token_type_name(TokenType t) {
     return "Whitespace";
   case TokenType::Punctuation:
     return "Punctuation";
+  case TokenType::Special:
+    return "Special";
   case TokenType::Unknown:
     return "Unknown";
   }
@@ -71,8 +73,8 @@ std::vector<Token> tokenize(const std::string &input, const Mapping &mapping) {
       Token t;
       t.type = rule->type;
       t.canonical_key = rule->canonical_key;
-      t.latin = key;
-      t.literal = rule->literal;
+      t.value = key;
+      // t.value = rule->literal;
       out.push_back(std::move(t));
       i += len;
       matched = true;
@@ -85,7 +87,7 @@ std::vector<Token> tokenize(const std::string &input, const Mapping &mapping) {
     if (is_space(c)) {
       Token t;
       t.type = TokenType::Whitespace;
-      t.latin = t.literal = std::string(1, input[i]);
+      t.value = std::string(1, input[i]);
       out.push_back(std::move(t));
       ++i;
       continue;
@@ -95,7 +97,7 @@ std::vector<Token> tokenize(const std::string &input, const Mapping &mapping) {
     std::size_t len = std::min(utf8_length(c), n - i);
     Token t;
     t.type = TokenType::Unknown;
-    t.latin = t.literal = input.substr(i, len);
+    t.value = input.substr(i, len);
     out.push_back(std::move(t));
     i += len;
   }

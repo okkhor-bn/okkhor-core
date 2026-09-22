@@ -1,14 +1,27 @@
 #pragma once
 
+namespace okkhor {
+
 enum class TokenType {
   Vowel,
   Consonant,
-  VirtualConsonant, // ` : the vcons base
+  VirtualConsonant,
   Accent,
-  Hasanta, // ,,
-  ZWNJ, // |
-  ZWJ, // ~
+
+  Hasanta,
+  ZWNJ,
+  ZWJ,
+
   Whitespace,
   Punctuation,
+  Special,
   Unknown
 };
+
+struct Token {
+  TokenType type = TokenType::Unknown;
+  std::string canonical_key;
+  std::string value;
+};
+
+} // namespace okkhor

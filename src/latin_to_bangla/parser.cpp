@@ -1,8 +1,9 @@
 #include "parser.hpp"
 
+#include <iostream>
 #include <optional>
 
-namespace okkhor {
+namespace okkhor::latin_to_bangla {
 
 Document parse(const std::vector<Token> &tokens) {
 
@@ -97,24 +98,14 @@ Document parse(const std::vector<Token> &tokens) {
     }
 
     case TokenType::Hasanta: {
-
-      // C + ,, -> BC + H
-
       if (cur && terminate_with_hasanta(*cur)) {
-
         flush();
-
         break;
       }
-
       flush();
-
       OrthographicUnit u = make_virtual_consonant();
-
       terminate_with_hasanta(u);
-
       doc.push_back(std::move(u));
-
       break;
     }
 
@@ -128,12 +119,9 @@ Document parse(const std::vector<Token> &tokens) {
 
       } else if (!doc.empty() &&
                  std::holds_alternative<IndependentVowel>(doc.back())) {
-
         std::get<IndependentVowel>(doc.back()).zwnj_after = true;
-
       } else {
-
-        doc.push_back(Literal{t.literal});
+        doc.push_back(Literal{t.canonical_key});
       }
 
       break;
@@ -150,7 +138,7 @@ Document parse(const std::vector<Token> &tokens) {
 
       flush();
 
-      doc.push_back(Literal{t.literal});
+      doc.push_back(Literal{t.value});
 
       break;
     }
@@ -162,4 +150,4 @@ Document parse(const std::vector<Token> &tokens) {
   return doc;
 }
 
-} // namespace okkhor
+} // namespace okkhor::latin_to_bangla

@@ -5,15 +5,17 @@
 #include <vector>
 
 #include "core/mapping.hpp"
-#include "latin_to_bangla/tokenizer.hpp"
+#include "core/tokenizer.hpp"
 
-namespace okkhor {
+namespace okkhor::latin_to_bangla {
 
 struct Condition {
   bool always = false;
   bool word_start = false;
   bool after_consonant = false;
   bool after_vowel = false;
+  bool before_consonant = false;
+  bool before_vowel = false;
 };
 
 struct Action {
@@ -42,7 +44,7 @@ private:
   std::map<std::string, std::vector<ContextRule>> rules_;
 
   bool evaluate_condition(const Condition &cond, bool is_word_start,
-                          TokenType last_type) const;
+                          TokenType last_type, TokenType next_type) const;
 };
 
 } // namespace okkhor

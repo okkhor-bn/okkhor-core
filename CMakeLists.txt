@@ -22,20 +22,20 @@ add_library(okkhor_core
     src/core/mapping.cpp
     src/core/orthography.cpp
     src/core/okkhor.cpp
+    src/core/tokenizer.cpp
 
     # JSON
     src/util/json.cpp
 
     # Latin -> Bangla
-    src/latin_to_bangla/tokenizer.cpp
     src/latin_to_bangla/parser.cpp
     src/latin_to_bangla/renderer.cpp
     src/latin_to_bangla/rules.cpp
 
     # Bangla -> Latin
-    # src/bangla_to_latin/tokenizer.cpp
-    # src/bangla_to_latin/parser.cpp
-    # src/bangla_to_latin/renderer.cpp
+    src/bangla_to_latin/parser.cpp
+    src/bangla_to_latin/renderer.cpp
+    src/bangla_to_latin/rules.cpp
 )
 
 target_include_directories(okkhor_core PUBLIC
@@ -71,53 +71,20 @@ add_custom_command(TARGET okkhor POST_BUILD
 
 enable_testing()
 
-add_executable(algebra_tests
-    tests/algebra_tests.cpp
+
+add_executable(engine_tests
+    tests/engine_tests.cpp
 )
 
-target_link_libraries(algebra_tests PRIVATE
+target_link_libraries(engine_tests PRIVATE
     okkhor_core
 )
 
-target_include_directories(algebra_tests PRIVATE
+target_include_directories(engine_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 
 add_test(
-    NAME algebra
-    COMMAND algebra_tests
-)
-
-add_executable(phonetic_tests
-    tests/phonetic_tests.cpp
-)
-
-target_link_libraries(phonetic_tests PRIVATE
-    okkhor_core
-)
-
-target_include_directories(phonetic_tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests
-)
-
-add_test(
-    NAME phonetic
-    COMMAND phonetic_tests
-)
-
-add_executable(rules_tests
-    tests/rules_tests.cpp
-)
-
-target_link_libraries(rules_tests PRIVATE
-    okkhor_core
-)
-
-target_include_directories(rules_tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests
-)
-
-add_test(
-    NAME rules
-    COMMAND rules_tests
+    NAME engine
+    COMMAND engine_tests
 )

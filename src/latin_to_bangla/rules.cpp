@@ -1,8 +1,9 @@
 #include "rules.hpp"
 #include "util/json.hpp"
 #include <stdexcept>
+#include <iostream>
 
-namespace okkhor {
+namespace okkhor::latin_to_bangla {
 
 void RuleEngine::load_string(const std::string &json_str, Mapping &mapping) {
   json::Value doc = json::parse(json_str);
@@ -18,7 +19,7 @@ void RuleEngine::load_string(const std::string &json_str, Mapping &mapping) {
 
     // Ensure tokenizer recognizes multi-char keys (e.g., "kkh", "t''")
     if (!mapping.lookup(key)) {
-      mapping.add_rule(key, Rule{TokenType::Unknown, "", key});
+      mapping.add_rule(key, Rule{TokenType::Special, "", key});
     }
 
     std::vector<ContextRule> parsed_rules;
@@ -76,7 +77,7 @@ void RuleEngine::load_file(const std::string &path, Mapping &mapping) {
       continue;
 
     if (!mapping.lookup(key)) {
-      mapping.add_rule(key, Rule{TokenType::Unknown, "", key});
+      mapping.add_rule(key, Rule{TokenType::Special, "", key});
     }
 
     std::vector<ContextRule> parsed_rules;
@@ -97,6 +98,13 @@ void RuleEngine::load_file(const std::string &path, Mapping &mapping) {
 
         const json::Value *av_v = when->find("after-vowel");
         cr.condition.after_vowel = av_v && av_v->is_bool() && av_v->as_bool();
+
+        const json::Value *bc_v = when->find("before-consonant");
+        cr.condition.before_consonant =
+            bc_v && bc_v->is_bool() && bc_v->as_bool();
+
+        const json::Value *bv_v = when->find("before-vowel");
+        cr.condition.before_vowel = bv_v && bv_v->is_bool() && bv_v->as_bool();
       }
 
       if (const json::Value *act = r.find("action")) {
@@ -122,7 +130,8 @@ void RuleEngine::load_file(const std::string &path, Mapping &mapping) {
 }
 
 bool RuleEngine::evaluate_condition(const Condition &cond, bool is_word_start,
-                                    TokenType last_type) const {
+                                    TokenType last_type,
+                                    TokenType next_type) const {
   if (cond.always)
     return true;
   if (cond.word_start && is_word_start)
@@ -130,6 +139,10 @@ bool RuleEngine::evaluate_condition(const Condition &cond, bool is_word_start,
   if (cond.after_consonant && last_type == TokenType::Consonant)
     return true;
   if (cond.after_vowel && last_type == TokenType::Vowel)
+    return true;
+  if (cond.before_consonant && next_type == TokenType::Consonant)
+    return true;
+  if (cond.before_vowel && next_type == TokenType::Vowel)
     return true;
   return false;
 }
@@ -140,33 +153,47 @@ std::vector<Token> RuleEngine::apply(const std::vector<Token> &tokens,
 
   bool is_word_start = true;
   TokenType last_type = TokenType::Unknown;
+  TokenType next_type = TokenType::Unknown;
 
-  for (const Token &t : tokens) {
-    auto it = rules_.find(t.latin);
+  for (std::size_t i = 0; i < tokens.size(); ++i) {
+    const Token &t = tokens[i];
+
+    if (i + 1 < tokens.size()) {
+      next_type = tokens[i + 1].type;
+    } else {
+      next_type = TokenType::Unknown;
+    }
+
+    auto it = rules_.find(t.value);
     bool matched = false;
+
+    // std::cout << "Processing token: " << t.value<< " (canonical: " <<t.canonical_key << ")" << std::endl;
 
     if (it != rules_.end()) {
       for (const ContextRule &rule : it->second) {
-        if (evaluate_condition(rule.condition, is_word_start, last_type)) {
+        if (evaluate_condition(rule.condition, is_word_start, last_type,
+                               next_type)) {
           matched = true;
 
           if (rule.action.type == Action::Type::Literal) {
             Token lit_token;
             lit_token.type = TokenType::Unknown;
-            lit_token.literal = rule.action.literal_value;
-            lit_token.latin = t.latin;
+            lit_token.value = rule.action.literal_value;
             output.push_back(lit_token);
             last_type = TokenType::Unknown;
           } else if (rule.action.type == Action::Type::TokenList) {
             for (const std::string &sub_latin : rule.action.token_values) {
               const Rule *m_rule = mapping.lookup(sub_latin);
+
               if (m_rule) {
                 Token sub_t;
+
                 sub_t.type = m_rule->type;
                 sub_t.canonical_key = m_rule->canonical_key;
-                sub_t.latin = sub_latin;
-                sub_t.literal = m_rule->literal;
+                sub_t.value = sub_latin;
+
                 output.push_back(sub_t);
+
                 last_type = sub_t.type;
               }
             }
@@ -188,4 +215,4 @@ std::vector<Token> RuleEngine::apply(const std::vector<Token> &tokens,
   return output;
 }
 
-} // namespace okkhor
+} // namespace okkhor::latin_to_bangla

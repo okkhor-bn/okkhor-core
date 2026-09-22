@@ -11,6 +11,29 @@
         }
       }
     ],
+    "gg": [
+      {
+        "when": {
+          "always": true
+        },
+        "action": {
+          "type": "token",
+          "value": ["j", "NG"]
+        }
+      }
+    ],
+
+    "ng": [
+      {
+        "when": {
+          "before-vowel": true
+        },
+        "action": {
+          "type": "token",
+          "value": ["Ng"]
+        }
+      }
+    ],
 
     "w": [
       {
@@ -33,14 +56,14 @@
       }
     ],
 
-    "a": [
+    ",,": [
       {
         "when": {
-          "after-vowel": true
+          "always": true
         },
         "action": {
-          "type": "literal",
-          "value": "আ"
+          "type": "token",
+          "value": [",.", "|"]
         }
       }
     ]

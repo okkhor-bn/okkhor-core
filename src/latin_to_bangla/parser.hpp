@@ -3,9 +3,9 @@
 #include <vector>
 
 #include "core/orthography.hpp"
-#include "tokenizer.hpp"
+#include "core/tokenizer.hpp"
 
-namespace okkhor {
+namespace okkhor::latin_to_bangla {
 
 Document parse(const std::vector<Token> &tokens);
 

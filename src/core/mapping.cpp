@@ -1,9 +1,11 @@
 #include "mapping.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <stdexcept>
 #include <utility>
 
+#include "tokenizer.hpp"
 #include "util/json.hpp"
 
 namespace okkhor {
@@ -37,6 +39,10 @@ std::string capitalize_first_ascii(const std::string &key) {
 } // namespace
 
 void Mapping::add_rule(const std::string &key, Rule rule) {
+  // std::cout << "key=[" << key << "] "
+  //           << "type=[" << token_type_name(rule.type) << "] "
+  //           << "canonical=[" << rule.canonical_key << "] "
+  //           << "literal=[" << rule.literal << "]\n";
   if (key.empty())
     throw std::runtime_error("empty key in mapping data");
 
@@ -46,6 +52,13 @@ void Mapping::add_rule(const std::string &key, Rule rule) {
   max_key_len_ = std::max(max_key_len_, key.size());
 
   rules_.emplace(key, std::move(rule));
+}
+
+void Mapping::set_rule(const std::string &key, Rule rule) {
+  if (key.empty())
+    throw std::runtime_error("empty key in mapping data");
+  max_key_len_ = std::max(max_key_len_, key.size());
+  rules_[key] = std::move(rule);
 }
 
 const Rule *Mapping::lookup(const std::string &key) const {
@@ -73,11 +86,11 @@ Mapping::consonant(const std::string &canonical_key) const {
   return &it->second;
 }
 
-const AccentEntry *Mapping::accent(const std::string &canonical_key) const {
-  auto it = accents_.find(canonical_key);
+const OtherEntry *Mapping::accent(const std::string &canonical_key) const {
+  auto it = others_.find(canonical_key);
 
-  if (it == accents_.end())
-    throw std::out_of_range("unknown accent key: " + canonical_key);
+  if (it == others_.end())
+    throw std::out_of_range("unknown other key: " + canonical_key);
 
   return &it->second;
 }
@@ -99,26 +112,36 @@ Mapping Mapping::load(const std::string &data_dir) {
     // Pass 1: canonical entries
     // -----------------------------------------------------
 
-    for (const auto &[latin, spec] : doc.as_object()) {
+    for (const auto &[key, spec] : doc.as_object()) {
       VowelEntry e;
 
-      e.latin = latin;
+      e.canonical_key = key;
       e.independent = spec.string_or("ind", "");
       e.dependent = spec.string_or("dep", "");
 
-      if (m.vowels_.count(latin))
-        throw std::runtime_error("duplicate vowel key: " + latin);
+      if (m.vowels_.count(key))
+        throw std::runtime_error("duplicate vowel key: " + key);
 
-      m.vowels_.emplace(latin, std::move(e));
+      m.vowels_.emplace(key, e);
 
-      m.add_rule(latin, Rule{TokenType::Vowel, latin, ""});
+      // Canonical Latin key.
+      m.add_rule(key, Rule{TokenType::Vowel, key, ""});
+
+      // Bengali independent vowel.
+      if (!e.independent.empty()) {
+        m.add_rule(e.independent, Rule{TokenType::Vowel, key, ""});
+      }
+
+      // Bengali dependent vowel sign.
+      if (!e.dependent.empty()) {
+        m.add_rule(e.dependent, Rule{TokenType::Vowel, key, ""});
+      }
     }
 
     // -----------------------------------------------------
     // Pass 2: explicit aliases
     // -----------------------------------------------------
-
-    for (const auto &[latin, spec] : doc.as_object()) {
+    for (const auto &[key, spec] : doc.as_object()) {
       const json::Value *aliases = spec.find("aliases");
 
       if (!aliases || !aliases->is_array())
@@ -130,7 +153,7 @@ Mapping Mapping::load(const std::string &data_dir) {
 
         const std::string &alias_key = alias.as_string();
 
-        m.add_rule(alias_key, Rule{TokenType::Vowel, latin, ""});
+        m.add_rule(alias_key, Rule{TokenType::Vowel, key, ""});
       }
     }
 
@@ -142,14 +165,14 @@ Mapping Mapping::load(const std::string &data_dir) {
     // take precedence.
     // -----------------------------------------------------
 
-    for (const auto &[latin, spec] : doc.as_object()) {
+    for (const auto &[key, spec] : doc.as_object()) {
       (void)spec;
 
-      std::string capitalized = capitalize_first_ascii(latin);
+      std::string capitalized = capitalize_first_ascii(key);
 
-      if (capitalized != latin && !m.rules_.count(capitalized)) {
+      if (capitalized != key && !m.rules_.count(capitalized)) {
 
-        m.add_rule(capitalized, Rule{TokenType::Vowel, latin, ""});
+        m.add_rule(capitalized, Rule{TokenType::Vowel, key, ""});
       }
     }
   }
@@ -157,7 +180,6 @@ Mapping Mapping::load(const std::string &data_dir) {
   // =========================================================
   // consonants.json
   // =========================================================
-
   {
     json::Value doc = json::parse_file(join(data_dir, "consonants.json"));
 
@@ -168,26 +190,32 @@ Mapping Mapping::load(const std::string &data_dir) {
     // Pass 1: canonical entries
     // -----------------------------------------------------
 
-    for (const auto &[latin, spec] : doc.as_object()) {
+    for (const auto &[key, spec] : doc.as_object()) {
       ConsonantEntry e;
 
-      e.latin = latin;
+      e.canonical_key = key;
       e.base = spec.string_or("base", "");
-      e.fola = spec.string_or("fola", "");
+      // e.fola = spec.string_or("fola", "");
 
-      if (m.consonants_.count(latin))
-        throw std::runtime_error("duplicate consonant key: " + latin);
+      if (m.consonants_.count(key))
+        throw std::runtime_error("duplicate consonant key: " + key);
 
-      m.consonants_.emplace(latin, std::move(e));
+      m.consonants_.emplace(key, e);
 
-      m.add_rule(latin, Rule{TokenType::Consonant, latin, ""});
+      // Canonical Latin key.
+      m.add_rule(key, Rule{TokenType::Consonant, key, ""});
+
+      // Bengali consonant base.
+      if (!e.base.empty() && !m.rules_.count(e.base)) {
+        m.add_rule(e.base, Rule{TokenType::Consonant, key, ""});
+      }
     }
 
     // -----------------------------------------------------
     // Pass 2: explicit aliases
     // -----------------------------------------------------
 
-    for (const auto &[latin, spec] : doc.as_object()) {
+    for (const auto &[key, spec] : doc.as_object()) {
       const json::Value *aliases = spec.find("aliases");
 
       if (!aliases || !aliases->is_array())
@@ -199,7 +227,7 @@ Mapping Mapping::load(const std::string &data_dir) {
 
         const std::string &alias_key = alias.as_string();
 
-        m.add_rule(alias_key, Rule{TokenType::Consonant, latin, ""});
+        m.add_rule(alias_key, Rule{TokenType::Consonant, key, ""});
       }
     }
 
@@ -207,14 +235,14 @@ Mapping Mapping::load(const std::string &data_dir) {
     // Pass 3: automatic capitalized aliases
     // -----------------------------------------------------
 
-    for (const auto &[latin, spec] : doc.as_object()) {
+    for (const auto &[key, spec] : doc.as_object()) {
       (void)spec;
 
-      std::string capitalized = capitalize_first_ascii(latin);
+      std::string capitalized = capitalize_first_ascii(key);
 
-      if (capitalized != latin && !m.rules_.count(capitalized)) {
+      if (capitalized != key && !m.rules_.count(capitalized)) {
 
-        m.add_rule(capitalized, Rule{TokenType::Consonant, latin, ""});
+        m.add_rule(capitalized, Rule{TokenType::Consonant, key, ""});
       }
     }
   }
@@ -236,8 +264,31 @@ Mapping Mapping::load(const std::string &data_dir) {
         return;
 
       for (const auto &[key, out] : v->as_object()) {
+        if (!out.is_string())
+          throw std::runtime_error(
+              std::string(
+                  "controls.json: expected string output in section: ") +
+              section);
 
-        m.add_rule(key, Rule{type, "", out.is_string() ? out.as_string() : ""});
+        const std::string &value = out.as_string();
+
+        // Forward representation:
+        // Latin/control syntax -> semantic token
+
+        OtherEntry e;
+        e.canonical_key = key;
+        e.value = value;
+
+        if (m.others_.count(key))
+          throw std::runtime_error("duplicate control key: " + key);
+        m.others_.emplace(key, e);
+        m.add_rule(key, Rule{type, value, ""});
+
+        // Reverse representation:
+        // Bangla Unicode -> same semantic token
+        if (!value.empty() && value != key) {
+          m.add_rule(value, Rule{type, value, ""});
+        }
       }
     };
 
@@ -254,24 +305,29 @@ Mapping Mapping::load(const std::string &data_dir) {
 
       // Pass 1: canonical accent entries
 
-      for (const auto &[latin, spec] : acc->as_object()) {
+      for (const auto &[key, spec] : acc->as_object()) {
 
-        AccentEntry e;
+        std::string value = spec.string_or("sign", "");
 
-        e.latin = latin;
-        e.sign = spec.string_or("sign", "");
+        OtherEntry e;
 
-        if (m.accents_.count(latin))
-          throw std::runtime_error("duplicate accent key: " + latin);
+        e.canonical_key = key;
+        e.value = value;
 
-        m.accents_.emplace(latin, std::move(e));
+        if (m.others_.count(key))
+          throw std::runtime_error("duplicate accent key: " + key);
 
-        m.add_rule(latin, Rule{TokenType::Accent, latin, ""});
+        m.others_.emplace(key, e);
+        m.add_rule(key, Rule{TokenType::Accent, key, ""});
+
+        if (!e.value.empty() && e.value != key) {
+          m.add_rule(e.value, Rule{TokenType::Accent, key, ""});
+        }
       }
 
       // Pass 2: explicit aliases
 
-      for (const auto &[latin, spec] : acc->as_object()) {
+      for (const auto &[key, spec] : acc->as_object()) {
 
         const json::Value *aliases = spec.find("aliases");
 
@@ -286,21 +342,21 @@ Mapping Mapping::load(const std::string &data_dir) {
 
           const std::string &alias_key = alias.as_string();
 
-          m.add_rule(alias_key, Rule{TokenType::Accent, latin, ""});
+          m.add_rule(alias_key, Rule{TokenType::Accent, key, ""});
         }
       }
 
       // Pass 3: automatic capitalized aliases
 
-      for (const auto &[latin, spec] : acc->as_object()) {
+      for (const auto &[key, spec] : acc->as_object()) {
 
         (void)spec;
 
-        std::string capitalized = capitalize_first_ascii(latin);
+        std::string capitalized = capitalize_first_ascii(key);
 
-        if (capitalized != latin && !m.rules_.count(capitalized)) {
+        if (capitalized != key && !m.rules_.count(capitalized)) {
 
-          m.add_rule(capitalized, Rule{TokenType::Accent, latin, ""});
+          m.add_rule(capitalized, Rule{TokenType::Accent, key, ""});
         }
       }
     }
@@ -315,11 +371,19 @@ Mapping Mapping::load(const std::string &data_dir) {
 
     if (!doc.is_object())
       throw std::runtime_error("punctuation.json: expected an object");
-
     for (const auto &[key, out] : doc.as_object()) {
 
-      m.add_rule(key, Rule{TokenType::Punctuation, "",
-                           out.is_string() ? out.as_string() : key});
+      OtherEntry e;
+      e.canonical_key = key;
+      e.value = out.as_string();
+
+      m.add_rule(key, Rule{
+                          TokenType::Punctuation,
+                          key,
+                      });
+
+      if (!e.value.empty())
+        m.add_rule(e.value, Rule{TokenType::Punctuation, key, });
     }
   }
 

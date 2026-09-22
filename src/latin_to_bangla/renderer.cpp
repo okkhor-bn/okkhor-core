@@ -2,137 +2,118 @@
 
 #include <type_traits>
 
-namespace okkhor {
+namespace okkhor::latin_to_bangla {
 
 // dcons = hosonto + bcons.
 // A fola form, when the data supplies one, is just another rendering
 // of the same dcons -- never a separate structural type.
-std::string Renderer::render_dependent(
-    const DependentConsonant& dc) const {
+std::string Renderer::render_dependent(const DependentConsonant &dc) const {
 
-    const ConsonantEntry* e =
-        mapping_->consonant(dc.value.key);
+  const ConsonantEntry *e = mapping_->consonant(dc.value.key);
 
-    if (!e->fola.empty())
-        return e->fola;
+  if (!e->fola.empty())
+    return e->fola;
 
-    return std::string(kHasanta) + e->base;
+  return std::string(kHasanta) + e->base;
 }
 
-std::string Renderer::render(
-    const OrthographicUnit& unit) const {
+std::string Renderer::render(const OrthographicUnit &unit) const {
 
-    std::string out;
+  std::string out;
 
-    // base:
-    //   bcons renders visibly
-    //   vcons renders as nothing
-    if (const auto* bc =
-            std::get_if<BaseConsonant>(&unit.base)) {
+  // base:
+  //   bcons renders visibly
+  //   vcons renders as nothing
+  if (const auto *bc = std::get_if<BaseConsonant>(&unit.base)) {
 
-        const ConsonantEntry* e =
-            mapping_->consonant(bc->value.key);
+    const ConsonantEntry *e = mapping_->consonant(bc->value.key);
 
-        out += e->base;
-    }
+    out += e->base;
+  }
 
-    for (const DependentConsonant& dc :
-         unit.conjuncts) {
+  for (const DependentConsonant &dc : unit.conjuncts) {
 
-        out += render_dependent(dc);
-    }
+    out += render_dependent(dc);
+  }
 
-    // The inherent অ is a semantic state, not a character.
-    // The dependent form of `o` is empty, so vn falls out of the data.
-    if (unit.vowel) {
+  // The inherent অ is a semantic state, not a character.
+  // The dependent form of `o` is empty, so vn falls out of the data.
+  if (unit.vowel) {
 
-        const VowelEntry* e =
-            mapping_->vowel(unit.vowel->value.key);
+    const VowelEntry *e = mapping_->vowel(unit.vowel->value.key);
 
-        out += e->dependent;
-    }
+    out += e->dependent;
+  }
 
-    if (unit.explicit_hasanta)
-        out += kHasanta;
+  if (unit.explicit_hasanta)
+    out += kHasanta;
 
-    for (const Accent& a :
-         unit.accents) {
+  for (const Accent &a : unit.accents) {
 
-        const AccentEntry* e =
-            mapping_->accent(a.key);
+    const OtherEntry *e = mapping_->accent(a.key);
 
-        out += e->sign;
-    }
+    out += e->value;
+  }
 
-    if (unit.zwnj_after)
-        out += kZwnj;
+  if (unit.zwnj_after)
+    out += kZwnj;
 
-    if (unit.zwj_after)
-        out += kZwj;
+  if (unit.zwj_after)
+    out += kZwj;
 
-    return out;
+  return out;
 }
 
-std::string Renderer::render(
-    const IndependentVowel& v) const {
+std::string Renderer::render(const IndependentVowel &v) const {
 
-    const VowelEntry* e =
-        mapping_->vowel(v.value.key);
+  const VowelEntry *e = mapping_->vowel(v.value.key);
 
-    std::string out = e->independent;
+  std::string out = e->independent;
 
-    for (const Accent& a :
-         v.accents) {
+  for (const Accent &a : v.accents) {
 
-        const AccentEntry* accent =
-            mapping_->accent(a.key);
+    const OtherEntry *accent = mapping_->accent(a.key);
 
-        out += accent->sign;
-    }
+    out += accent->value;
+  }
 
-    if (v.zwnj_after)
-        out += kZwnj;
+  if (v.zwnj_after)
+    out += kZwnj;
 
-    if (v.zwj_after)
-        out += kZwj;
+  if (v.zwj_after)
+    out += kZwj;
 
-    return out;
+  return out;
 }
 
-std::string Renderer::render(
-    const Element& element) const {
+std::string Renderer::render(const Element &element) const {
 
-    return std::visit(
-        [this](const auto& e) -> std::string {
+  return std::visit(
+      [this](const auto &e) -> std::string {
+        using T = std::decay_t<decltype(e)>;
 
-            using T = std::decay_t<decltype(e)>;
+        if constexpr (std::is_same_v<T, Literal>) {
 
-            if constexpr (
-                std::is_same_v<T, Literal>) {
+          return e.text;
 
-                return e.text;
+        } else {
 
-            } else {
-
-                return this->render(e);
-            }
-        },
-        element
-    );
+          return this->render(e);
+        }
+      },
+      element);
 }
 
-std::string Renderer::render(
-    const Document& doc) const {
+std::string Renderer::render(const Document &doc) const {
 
-    std::string out;
+  std::string out;
 
-    for (const Element& e :
-         doc) {
+  for (const Element &e : doc) {
 
-        out += render(e);
-    }
+    out += render(e);
+  }
 
-    return out;
+  return out;
 }
 
-} // namespace okkhor
+} // namespace okkhor::latin_to_bangla

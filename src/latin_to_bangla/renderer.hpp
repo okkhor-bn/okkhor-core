@@ -7,7 +7,7 @@
 #include "core/mapping.hpp"
 #include "core/orthography.hpp"
 
-namespace okkhor {
+namespace okkhor::latin_to_bangla {
 
 // U+09CD BENGALI SIGN VIRAMA
 inline constexpr const char *kHasanta = "\xE0\xA7\x8D";

@@ -1,18 +1,5 @@
 #pragma once
 
-// Phase 1 + Phase 2: semantic types and the Okkhor algebra.
-//
-//   H + V  -> DV
-//   H + BC -> DC
-//   H + অ  -> VN
-//
-//   C      -> BC + H + অ == BC
-//   C + V  -> BC + DV
-//   C + C  -> BC + DC + VN
-//   C + ,, -> BC + H
-//   `      -> VC
-//
-// Nothing here knows anything about Unicode or about Latin input.
 
 #include <optional>
 #include <string>
@@ -20,16 +7,6 @@
 #include <vector>
 
 namespace okkhor {
-
-// Canonical keys into the mapping tables.
-// Never raw Unicode.
-//
-// Examples:
-//   "k"  -> ক
-//   "sh" -> শ
-//   "a"  -> আ
-//
-// Aliases are resolved by Mapping before they reach this layer.
 struct Vowel {
   std::string key;
 };
@@ -76,14 +53,6 @@ struct DependentVowel {
 
 }; // dvowel = hosonto + vowel
 
-// One orthographic cluster:
-//
-//   base
-//   zero or more dependent consonants
-//   optional dependent vowel
-//   optional accents
-//   terminal flags
-//
 struct OrthographicUnit {
 
   Base base{VirtualConsonant{}};
