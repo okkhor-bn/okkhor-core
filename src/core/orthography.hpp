@@ -109,6 +109,8 @@ bool add_accent(OrthographicUnit &u, Accent a);
 
 bool terminate_with_hasanta(OrthographicUnit &u);
 
+void add_hasanta(OrthographicUnit &u);
+
 void add_zwnj(OrthographicUnit &u);
 
 void add_zwj(OrthographicUnit &u);

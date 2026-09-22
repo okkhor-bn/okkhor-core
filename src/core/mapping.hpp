@@ -36,6 +36,7 @@ struct Rule {
   TokenType type = TokenType::Unknown;
   std::string canonical_key;
   std::string literal;
+  std::string value;
 };
 
 class Mapping {

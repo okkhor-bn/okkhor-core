@@ -1,7 +1,7 @@
 #include "rules.hpp"
 #include "util/json.hpp"
-#include <stdexcept>
 #include <iostream>
+#include <stdexcept>
 
 namespace okkhor::latin_to_bangla {
 
@@ -167,7 +167,8 @@ std::vector<Token> RuleEngine::apply(const std::vector<Token> &tokens,
     auto it = rules_.find(t.value);
     bool matched = false;
 
-    // std::cout << "Processing token: " << t.value<< " (canonical: " <<t.canonical_key << ")" << std::endl;
+    // std::cout << "Processing token: " << t.value<< " (canonical: "
+    // <<t.canonical_key << ")" << std::endl;
 
     if (it != rules_.end()) {
       for (const ContextRule &rule : it->second) {
@@ -186,11 +187,12 @@ std::vector<Token> RuleEngine::apply(const std::vector<Token> &tokens,
               const Rule *m_rule = mapping.lookup(sub_latin);
 
               if (m_rule) {
+               const Rule *c_rule = mapping.lookup(m_rule->canonical_key);
                 Token sub_t;
 
                 sub_t.type = m_rule->type;
                 sub_t.canonical_key = m_rule->canonical_key;
-                sub_t.value = sub_latin;
+                sub_t.value = c_rule->value;
 
                 output.push_back(sub_t);
 

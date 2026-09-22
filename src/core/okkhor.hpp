@@ -111,7 +111,7 @@ public:
 
     std::vector<Token> rewritten_tokens = analyze_bangla_to_latin_tokens(input);
 
-    return bangla_to_latin::parse(rewritten_tokens);
+    return bangla_to_latin::parse(rewritten_tokens, mapping_);
   }
 
   std::string transliterate_bangla_to_latin(const std::string &input) const {

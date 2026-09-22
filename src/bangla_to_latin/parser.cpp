@@ -1,10 +1,8 @@
 #include "parser.hpp"
 
-#include <iostream>
-
 namespace okkhor::bangla_to_latin {
 
-Document parse(const std::vector<Token> &tokens) {
+Document parse(const std::vector<Token> &tokens, const Mapping &mapping) {
 
   Document document;
 
@@ -57,8 +55,8 @@ Document parse(const std::vector<Token> &tokens) {
       const Token *next = peek();
 
       const bool followed_by_hasanta = next && next->type == TokenType::Hasanta;
-      const bool preceded_by_vowel =
-          i > 0 && tokens[i - 1].type == TokenType::Vowel;
+      const bool followed_by_consonant =
+          next && next->type == TokenType::Consonant;
 
       const bool after_hasanta =
           i > 0 && tokens[i - 1].type == TokenType::Hasanta;
@@ -68,10 +66,8 @@ Document parse(const std::vector<Token> &tokens) {
         break;
       }
 
-      if (!after_hasanta) {
+      if (!after_hasanta || current.explicit_hasanta) {
         if (!current.vowel && !current.explicit_hasanta) {
-          std::cout << "Adding inherent vowel 'o' to current consonant before "
-                       "starting new consonant.\n";
           add_vowel(current, Vowel{"o"});
         }
 
@@ -84,9 +80,9 @@ Document parse(const std::vector<Token> &tokens) {
 
       current.conjuncts.emplace_back(DependentConsonant{consonant});
 
-      if (!followed_by_hasanta && next->type != TokenType::Vowel) {
-        if (!current.vowel && !current.explicit_hasanta) {
-          std::cout << "Adding inherent vowel 'o' to current consonant.\n";
+      if (!followed_by_hasanta) {
+        if (!current.vowel && !current.explicit_hasanta &&
+            followed_by_consonant) {
           add_vowel(current, Vowel{"o"});
         }
         close_unit();
@@ -140,13 +136,18 @@ Document parse(const std::vector<Token> &tokens) {
     case TokenType::Hasanta: {
 
       if (!has_current) {
-
         document.emplace_back(Literal{token.value});
-
         break;
       }
 
       const Token *next = peek();
+
+      const Token *prev = (i > 0) ? &tokens[i - 1] : nullptr;
+
+      std::string possible_key =
+          (prev ? prev->canonical_key : "") + (next ? next->canonical_key : "");
+
+      const Rule *rule = next ? mapping.lookup(possible_key) : nullptr;
 
       const bool followed_by_consonant =
           next && next->type == TokenType::Consonant;
@@ -154,18 +155,31 @@ Document parse(const std::vector<Token> &tokens) {
       const bool followed_by_zwnj = next && next->type == TokenType::ZWNJ;
 
       /*
-       * Hasanta before a consonant is structural.
+       * Hasanta + consonant.
        *
-       * We do not add anything here. The next consonant
-       * will see that the previous token was Hasanta and
-       * will become a dependent consonant.
+       * Normally the hasanta is structural:
+       *
+       *     ন্‌ত
+       *
+       * The next consonant becomes a conjunct member,
+       * so the hasanta itself does not need to be stored.
+       *
+       * However, if a rule exists for the sequence,
+       * the hasanta is meaningful and must be preserved.
        */
-      if (followed_by_consonant)
+      if (followed_by_consonant) {
+
+        if (rule) {
+          terminate_with_hasanta(current);
+        }
+
         break;
+      }
 
       /*
-       * Hasanta followed by ZWNJ is an explicit
-       * hasanta + ZWNJ sequence.
+       * Explicit hasanta + ZWNJ.
+       *
+       * This must always preserve the hasanta.
        */
       if (followed_by_zwnj) {
 

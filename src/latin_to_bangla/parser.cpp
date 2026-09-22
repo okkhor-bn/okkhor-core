@@ -19,7 +19,9 @@ Document parse(const std::vector<Token> &tokens) {
     }
   };
 
-  for (const Token &t : tokens) {
+  for (int i = 0; i < tokens.size(); i++) {
+
+    const Token &t = tokens[i];
 
     switch (t.type) {
 
@@ -98,6 +100,14 @@ Document parse(const std::vector<Token> &tokens) {
     }
 
     case TokenType::Hasanta: {
+
+      bool next_is_zwnj = tokens.size() > i + 1 && tokens[i + 1].type == TokenType::ZWNJ;
+
+      if(next_is_zwnj){
+        add_hasanta(*cur);
+        break;
+      }
+
       if (cur && terminate_with_hasanta(*cur)) {
         flush();
         break;

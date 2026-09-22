@@ -1,16 +1,6 @@
 {
   "rules": {
-    "kkh": [
-      {
-        "when": {
-          "always": true
-        },
-        "action": {
-          "type": "token",
-          "value": ["k", "Sh"]
-        }
-      }
-    ],
+    
     "gg": [
       {
         "when": {

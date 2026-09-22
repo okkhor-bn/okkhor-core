@@ -55,8 +55,9 @@ bool terminate_with_hasanta(OrthographicUnit &u) {
   return true;
 }
 
+void add_hasanta(OrthographicUnit &u) { u.explicit_hasanta = true; }
+
 void add_zwnj(OrthographicUnit &u) { u.zwnj_after = true; }
 void add_zwj(OrthographicUnit &u) { u.zwj_after = true; }
-
 
 } // namespace okkhor

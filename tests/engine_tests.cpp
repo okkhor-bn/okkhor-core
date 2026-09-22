@@ -4,6 +4,7 @@
 #include "test_util.hpp"
 
 int main() {
+ 
 
   const std::string data_dir = okkhor::find_data_dir();
 
@@ -162,10 +163,18 @@ int main() {
   const std::string hard = "ক্ষ্ম্যজ্ঞ্যন্ত্‌র্য্যশ্চ্ছ্বঙ্ক্ষ্ট্র্দ্ধ্ব্যাঁক্‌ন্‌ম্গ্ন্ত্র্যৌক্ক্হৃঙ্ঘ্ন্"
                            "য";
 
+   const std::string soft = "ক্ক্হৃ";
+
   testing::check("Round trip: hard",
                  engine.transliterate_latin_to_bangla(
                      engine.transliterate_bangla_to_latin(hard)),
                  hard);
+
+  testing::check("Round trip: soft",
+                 engine.transliterate_latin_to_bangla(
+                     engine.transliterate_bangla_to_latin(soft)),
+                 soft);
+
 
   return testing::report("engine");
 }

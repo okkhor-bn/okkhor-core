@@ -62,6 +62,7 @@ void Mapping::set_rule(const std::string &key, Rule rule) {
 }
 
 const Rule *Mapping::lookup(const std::string &key) const {
+
   auto it = rules_.find(key);
 
   return it == rules_.end() ? nullptr : &it->second;
@@ -282,12 +283,12 @@ Mapping Mapping::load(const std::string &data_dir) {
         if (m.others_.count(key))
           throw std::runtime_error("duplicate control key: " + key);
         m.others_.emplace(key, e);
-        m.add_rule(key, Rule{type, value, ""});
+        m.add_rule(key, Rule{type, key, ""});
 
         // Reverse representation:
         // Bangla Unicode -> same semantic token
         if (!value.empty() && value != key) {
-          m.add_rule(value, Rule{type, value, ""});
+          m.add_rule(value, Rule{type, key, ""});
         }
       }
     };
