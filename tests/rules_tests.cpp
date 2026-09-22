@@ -1,11 +1,11 @@
 #include <string>
 #include <vector>
 
-#include "mapping.hpp"
-#include "okkhor.hpp"
-#include "rules.hpp"
+#include "core/mapping.hpp"
+#include "core/okkhor.hpp"
+#include "latin_to_bangla/rules.hpp"
+#include "latin_to_bangla/tokenizer.hpp"
 #include "test_util.hpp"
-#include "tokenizer.hpp"
 
 using namespace okkhor;
 using testing::check;

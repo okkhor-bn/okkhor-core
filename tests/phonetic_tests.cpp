@@ -1,7 +1,7 @@
 // End-to-end: Latin phonetic input -> Bangla UTF-8.
 #include <string>
 
-#include "okkhor.hpp"
+#include "core/okkhor.hpp"
 #include "test_util.hpp"
 
 using namespace okkhor;

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cctype>
 
-#include "mapping.hpp"
+#include "core/mapping.hpp"
 
 namespace okkhor {
 namespace {
@@ -70,7 +70,7 @@ std::vector<Token> tokenize(const std::string &input, const Mapping &mapping) {
         continue;
       Token t;
       t.type = rule->type;
-      t.id = rule->id;
+      t.canonical_key = rule->canonical_key;
       t.latin = key;
       t.literal = rule->literal;
       out.push_back(std::move(t));

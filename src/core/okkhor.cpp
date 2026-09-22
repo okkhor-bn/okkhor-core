@@ -1,4 +1,4 @@
-#include "okkhor.hpp"
+#include "core/okkhor.hpp"
 
 #include <cstdlib>
 #include <fstream>
@@ -10,7 +10,7 @@ namespace {
 bool looks_like_data_dir(const std::string &dir) {
   std::ifstream probe(dir + "/vowels.json", std::ios::binary);
   return static_cast<bool>(probe);
-}
+} 
 
 } // namespace
 

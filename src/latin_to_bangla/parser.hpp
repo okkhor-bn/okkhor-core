@@ -2,7 +2,7 @@
 // Phase 5: tokens -> algebraic operations. The parser never touches Unicode.
 #include <vector>
 
-#include "orthography.hpp"
+#include "core/orthography.hpp"
 #include "tokenizer.hpp"
 
 namespace okkhor {

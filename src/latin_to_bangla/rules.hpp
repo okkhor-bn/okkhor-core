@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "mapping.hpp"
-#include "tokenizer.hpp"
+#include "core/mapping.hpp"
+#include "latin_to_bangla/tokenizer.hpp"
 
 namespace okkhor {
 

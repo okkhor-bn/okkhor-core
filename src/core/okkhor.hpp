@@ -2,17 +2,14 @@
 // Façade over the pipeline:
 //   Latin -> tokenizer -> rule engine -> parser (algebra) -> renderer -> Bangla
 //   UTF-8
+#include <iostream>
 #include <string>
 #include <vector>
-#include  <iostream>
 
-#include "mapping.hpp"
-#include "orthography.hpp"
-#include "parser.hpp"
-#include "renderer.hpp"
-#include "rules.hpp"
-#include "tokenizer.hpp"
+#include "latin_to_bangla/index.hpp"
 
+#include "core/mapping.hpp"
+#include "core/orthography.hpp"
 
 namespace okkhor {
 
@@ -28,7 +25,7 @@ public:
     RuleEngine re;
     std::string rules_path =
         data_dir.empty() ? "rules.json" : data_dir + "/rules.json";
-    
+
     // Load contextual rules into RuleEngine
     re.load_file(rules_path, m);
 

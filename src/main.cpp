@@ -9,7 +9,7 @@
 #include <variant>
 #include <vector>
 
-#include "okkhor.hpp"
+#include "core/okkhor.hpp"
 
 namespace {
 
@@ -19,6 +19,7 @@ void describe(const okkhor::Engine &engine, const std::string &input) {
   // Step 1: Tokenize
   std::vector<okkhor::Token> raw_tokens = engine.tokenize_input(input);
 
+  // Print the raw tokens
   std::cout << "raw tokens  :";
   for (const okkhor::Token &t : raw_tokens)
     std::cout << " " << okkhor::token_type_name(t.type) << "(" << t.latin
@@ -29,6 +30,7 @@ void describe(const okkhor::Engine &engine, const std::string &input) {
   std::vector<okkhor::Token> rewritten_tokens =
       engine.rule_engine().apply(raw_tokens, engine.mapping());
 
+  // Print the rewritten tokens
   std::cout << "rule tokens :";
   for (const okkhor::Token &t : rewritten_tokens)
     std::cout << " " << okkhor::token_type_name(t.type) << "(" << t.latin
@@ -42,30 +44,48 @@ void describe(const okkhor::Engine &engine, const std::string &input) {
     std::visit(
         [&](const auto &u) {
           using T = std::decay_t<decltype(u)>;
+
           if constexpr (std::is_same_v<T, okkhor::OrthographicUnit>) {
             std::cout << " [base=";
-            if (const auto *bc = std::get_if<okkhor::BaseConsonant>(&u.base))
-              std::cout << engine.mapping().consonant(bc->value.id).latin;
-            else
+
+            if (const auto *bc = std::get_if<okkhor::BaseConsonant>(&u.base)) {
+
+              std::cout << engine.mapping().consonant(bc->value.key)->latin;
+            } else {
               std::cout << "vcons";
-            for (const auto &dc : u.conjuncts)
+            }
+
+            for (const auto &dc : u.conjuncts) {
               std::cout << " +dcons("
-                        << engine.mapping().consonant(dc.value.id).latin << ")";
-            if (u.vowel)
+                        << engine.mapping().consonant(dc.value.key)->latin
+                        << ")";
+            }
+
+            if (u.vowel) {
               std::cout << " +dvowel("
-                        << engine.mapping().vowel(u.vowel->value.id).latin
+                        << engine.mapping().vowel(u.vowel->value.key)->latin
                         << ")";
-            for (const auto &a : u.accents)
-              std::cout << " +accent(" << engine.mapping().accent(a.id).latin
+            }
+
+            for (const auto &a : u.accents) {
+              std::cout << " +accent(" << engine.mapping().accent(a.key)->latin
                         << ")";
+            }
+
             if (u.explicit_hasanta)
               std::cout << " +hasanta";
+
             if (u.zwnj_after)
               std::cout << " +zwnj";
+
+            if (u.zwj_after)
+              std::cout << " +zwj";
+
             std::cout << "]";
           } else if constexpr (std::is_same_v<T, okkhor::IndependentVowel>) {
-            std::cout << " [vowel(" << engine.mapping().vowel(u.value.id).latin
-                      << ")]";
+
+            std::cout << " [vowel("
+                      << engine.mapping().vowel(u.value.key)->latin << ")]";
           } else {
             std::cout << " [literal \"" << u.text << "\"]";
           }

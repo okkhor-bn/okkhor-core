@@ -5,9 +5,12 @@
 namespace okkhor {
 
 Document parse(const std::vector<Token> &tokens) {
-  Document doc;
-  std::optional<OrthographicUnit> cur; // the unit currently being built
 
+  Document doc;
+
+  std::optional<OrthographicUnit> cur;
+
+  // The unit currently being built.
   auto flush = [&] {
     if (cur) {
       doc.push_back(*cur);
@@ -16,87 +19,146 @@ Document parse(const std::vector<Token> &tokens) {
   };
 
   for (const Token &t : tokens) {
+
     switch (t.type) {
+
     case TokenType::Consonant: {
-      // C + C -> BC + DC + VN, otherwise start a fresh unit.
-      if (cur && add_consonant(*cur, Consonant{t.id}))
+
+      // C + C -> BC + DC + VN
+      // Otherwise start a fresh unit.
+
+      Consonant c{t.canonical_key};
+
+      if (cur && add_consonant(*cur, c))
         break;
+
       flush();
-      cur = make_consonant(Consonant{t.id});
+
+      cur = make_consonant(c);
+
       break;
     }
 
     case TokenType::VirtualConsonant: {
-      // ` always opens a new unit with a visually-nothing base.
+
+      // ` always opens a new unit with a
+      // visually-nothing base.
+
       flush();
+
       cur = make_virtual_consonant();
+
       break;
     }
 
     case TokenType::Vowel: {
-      // C + V -> BC + DV; a vowel with no open base stands alone.
-      if (cur && add_vowel(*cur, Vowel{t.id}))
+
+      // C + V -> BC + DV
+      // A vowel with no open base stands alone.
+
+      Vowel v{t.canonical_key};
+
+      if (cur && add_vowel(*cur, v))
         break;
+
       flush();
-      doc.push_back(IndependentVowel{Vowel{t.id}, {}, false});
+
+      IndependentVowel independent{v, {}, false, false};
+
+      doc.push_back(std::move(independent));
+
       break;
     }
 
     case TokenType::Accent: {
-      if (cur && add_accent(*cur, Accent{t.id}))
+
+      Accent a{t.canonical_key};
+
+      if (cur && add_accent(*cur, a))
         break;
+
       if (!cur && !doc.empty() &&
           std::holds_alternative<IndependentVowel>(doc.back())) {
-        std::get<IndependentVowel>(doc.back()).accents.push_back(Accent{t.id});
+
+        std::get<IndependentVowel>(doc.back()).accents.push_back(a);
+
         break;
       }
+
       flush();
+
       OrthographicUnit u = make_virtual_consonant();
-      add_accent(u, Accent{t.id});
+
+      add_accent(u, a);
+
       doc.push_back(std::move(u));
+
       break;
     }
 
     case TokenType::Hasanta: {
+
       // C + ,, -> BC + H
+
       if (cur && terminate_with_hasanta(*cur)) {
+
         flush();
+
         break;
       }
+
       flush();
+
       OrthographicUnit u = make_virtual_consonant();
+
       terminate_with_hasanta(u);
+
       doc.push_back(std::move(u));
+
       break;
     }
 
     case TokenType::ZWNJ: {
+
       if (cur) {
+
         add_zwnj(*cur);
+
         flush();
+
       } else if (!doc.empty() &&
                  std::holds_alternative<IndependentVowel>(doc.back())) {
+
         std::get<IndependentVowel>(doc.back()).zwnj_after = true;
+
       } else {
+
         doc.push_back(Literal{t.literal});
       }
+
       break;
     }
 
-    // Whitespace, punctuation and unknown input close the current unit
-    // and are passed through untouched.
     case TokenType::Whitespace:
     case TokenType::Punctuation:
     case TokenType::Unknown:
     default: {
+
+      // Whitespace, punctuation and unknown input
+      // close the current unit and pass through
+      // untouched.
+
       flush();
+
       doc.push_back(Literal{t.literal});
+
       break;
     }
     }
   }
 
   flush();
+
   return doc;
 }
 

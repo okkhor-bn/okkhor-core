@@ -43,18 +43,6 @@
           "value": "আ"
         }
       }
-    ],
-
-    "t''": [
-      {
-        "when": {
-          "always": true
-        },
-        "action": {
-          "type": "literal",
-          "value": "ৎ"
-        }
-      }
     ]
   }
 }

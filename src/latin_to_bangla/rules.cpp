@@ -1,5 +1,5 @@
 #include "rules.hpp"
-#include "json.hpp"
+#include "util/json.hpp"
 #include <stdexcept>
 
 namespace okkhor {
@@ -18,7 +18,7 @@ void RuleEngine::load_string(const std::string &json_str, Mapping &mapping) {
 
     // Ensure tokenizer recognizes multi-char keys (e.g., "kkh", "t''")
     if (!mapping.lookup(key)) {
-      mapping.add_rule(key, Rule{TokenType::Unknown, -1, key});
+      mapping.add_rule(key, Rule{TokenType::Unknown, "", key});
     }
 
     std::vector<ContextRule> parsed_rules;
@@ -76,7 +76,7 @@ void RuleEngine::load_file(const std::string &path, Mapping &mapping) {
       continue;
 
     if (!mapping.lookup(key)) {
-      mapping.add_rule(key, Rule{TokenType::Unknown, -1, key});
+      mapping.add_rule(key, Rule{TokenType::Unknown, "", key});
     }
 
     std::vector<ContextRule> parsed_rules;
@@ -163,7 +163,7 @@ std::vector<Token> RuleEngine::apply(const std::vector<Token> &tokens,
               if (m_rule) {
                 Token sub_t;
                 sub_t.type = m_rule->type;
-                sub_t.id = m_rule->id;
+                sub_t.canonical_key = m_rule->canonical_key;
                 sub_t.latin = sub_latin;
                 sub_t.literal = m_rule->literal;
                 output.push_back(sub_t);

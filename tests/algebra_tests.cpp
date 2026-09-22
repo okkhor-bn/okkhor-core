@@ -2,10 +2,10 @@
 // phonetic behaviour: units are built by calling the algebra directly.
 #include <string>
 
-#include "mapping.hpp"
-#include "okkhor.hpp"
-#include "orthography.hpp"
-#include "renderer.hpp"
+#include "core/mapping.hpp"
+#include "core/okkhor.hpp"
+#include "core/orthography.hpp"
+#include "latin_to_bangla/renderer.hpp"
 #include "test_util.hpp"
 
 using namespace okkhor;
@@ -16,12 +16,12 @@ int main() {
   Mapping mapping = Mapping::load(find_data_dir());
   Renderer renderer(mapping);
 
-  const Consonant K{mapping.consonant_id("k")};
-  const Consonant T{mapping.consonant_id("t")};
-  const Consonant R{mapping.consonant_id("r")};
-  const Vowel O_INHERENT{mapping.vowel_id("o")};
-  const Vowel A{mapping.vowel_id("a")};
-  const Vowel I{mapping.vowel_id("i")};
+  const Consonant K{Consonant{"k"}};
+  const Consonant T{Consonant{"t"}};
+  const Consonant R{Consonant{"r"}};
+  const Vowel O_INHERENT{Vowel{"o"}};
+  const Vowel A{Vowel{"a"}};
+  const Vowel I{Vowel{"i"}};
 
   // C -> BC (inherent অ is a state, not a character)
   {
@@ -67,11 +67,11 @@ int main() {
 
   // Arbitrarily long conjuncts: C + C + C, and C + C + C + V
   {
-    OrthographicUnit u = make_consonant(Consonant{mapping.consonant_id("s")});
+    OrthographicUnit u = make_consonant(Consonant{"k"});
     add_consonant(u, T);
     add_consonant(u, R);
     check("C + C + C -> স্ত্র", renderer.render(u), "স্ত্র");
-    add_vowel(u, Vowel{mapping.vowel_id("I")});
+    add_vowel(u, Vowel{"i"});
     check("C + C + C + V -> স্ত্রী", renderer.render(u), "স্ত্রী");
     check_true("three-member cluster", u.conjuncts.size() == 2);
   }
