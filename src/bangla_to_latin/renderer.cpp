@@ -54,7 +54,7 @@ std::string Renderer::render(const OrthographicUnit &unit) const {
   }
 
   if (unit.zwj_after) {
-    out += "~";
+    out += mapping_->controls().at("zwj");
   }
 
   for (const Accent &accent : unit.accents) {
@@ -83,7 +83,7 @@ std::string Renderer::render(const IndependentVowel &vowel) const {
 
   if (vowel.zwj_after) {
 
-    out += "~";
+    out += mapping_->controls().at("zwj");
   }
 
   return out;

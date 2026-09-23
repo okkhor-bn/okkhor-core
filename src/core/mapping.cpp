@@ -39,6 +39,10 @@ std::string capitalize_first_ascii(const std::string &key) {
 } // namespace
 
 void Mapping::add_rule(const std::string &key, Rule rule) {
+  // std::cout<<"Mapping::add_rule: key=" << key << " type=" << token_type_name(rule.type)
+  //          << " canonical_key=" << rule.canonical_key
+  //          << " value=" << rule.value << std::endl;
+           
   if (key.empty())
     throw std::runtime_error("empty key in mapping data");
 

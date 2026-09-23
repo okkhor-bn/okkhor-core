@@ -20,7 +20,7 @@ bool is_virtual(const OrthographicUnit &u) {
 
 // A unit is sealed once it carries a terminal marker.
 static bool sealed(const OrthographicUnit &u) {
-  return u.explicit_hasanta || u.zwnj_after;
+  return u.explicit_hasanta || u.zwnj_after||u.zwj_after;
 }
 
 bool is_open(const OrthographicUnit &u) {

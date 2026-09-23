@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iostream>
 
 #include "core/mapping.hpp"
 
@@ -43,6 +44,8 @@ const char *token_type_name(TokenType t) {
     return "Hasanta";
   case TokenType::ZWNJ:
     return "ZWNJ";
+  case TokenType::ZWJ:
+    return "ZWJ";
   case TokenType::Whitespace:
     return "Whitespace";
   case TokenType::Punctuation:

@@ -100,37 +100,55 @@ Document parse(const std::vector<Token> &tokens, const Mapping &mapping) {
     }
 
     case TokenType::Hasanta: {
+      const bool next_is_zwnj =
+          i + 1 < tokens.size() && tokens[i + 1].type == TokenType::ZWNJ;
 
-      bool next_is_zwnj =
-          tokens.size() > i + 1 && tokens[i + 1].type == TokenType::ZWNJ;
-
-      if (next_is_zwnj) {
+      if (cur) {
         add_hasanta(*cur);
-        break;
-      }
 
-      if (cur && terminate_with_hasanta(*cur)) {
+        if (next_is_zwnj) {
+          add_zwnj(*cur);
+          ++i; // consume the ZWNJ together with Hasanta
+        }
+
         flush();
         break;
       }
-      flush();
+
       OrthographicUnit u = make_virtual_consonant();
-      terminate_with_hasanta(u);
+
+      add_hasanta(u);
+
+      if (next_is_zwnj) {
+        add_zwnj(u);
+        ++i;
+      }
+
       doc.push_back(std::move(u));
       break;
     }
 
     case TokenType::ZWNJ: {
-
       if (cur) {
-
         add_zwnj(*cur);
-
         flush();
-
       } else if (!doc.empty() &&
                  std::holds_alternative<IndependentVowel>(doc.back())) {
         std::get<IndependentVowel>(doc.back()).zwnj_after = true;
+      } else {
+        doc.push_back(Literal{t.canonical_key});
+      }
+
+      break;
+    }
+
+    case TokenType::ZWJ: {
+      if (cur) {
+        add_zwj(*cur);
+        flush();
+      } else if (!doc.empty() &&
+                 std::holds_alternative<IndependentVowel>(doc.back())) {
+        std::get<IndependentVowel>(doc.back()).zwj_after = true;
       } else {
         doc.push_back(Literal{t.canonical_key});
       }
@@ -142,9 +160,10 @@ Document parse(const std::vector<Token> &tokens, const Mapping &mapping) {
       flush();
       const OtherEntry *e = mapping.other(t.canonical_key);
       if (!e) {
-        throw std::runtime_error("Unknown punctuation(" + t.canonical_key + ")");
+        throw std::runtime_error("Unknown punctuation(" + t.canonical_key +
+                                 ")");
       }
-      doc.push_back(Literal{e->value });
+      doc.push_back(Literal{e->value});
       break;
     }
 

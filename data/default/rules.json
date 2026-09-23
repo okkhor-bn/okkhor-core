@@ -70,6 +70,7 @@
 
     ",,": [
       {
+        "desc": "Non joining hasanta",
         "when": {
           "always": true
         },
@@ -81,6 +82,7 @@
     ],
     ";;": [
       {
+        "desc": "; bypassing zwnj",
         "when": {
           "always": true
         },
@@ -93,17 +95,19 @@
 
     "rya": [
       {
+        "desc": "allow র‍্যা to render properly as r+zwj+z+a",
         "when": {
           "always": true
         },
         "action": {
           "type": "token",
-          "value": ["r", ";", "`", "y", "a"]
+          "value": ["r", ",;", "`", "z", "a"]
         }
       }
     ],
     "..": [
       {
+        "desc": "Dot bypassing dari",
         "when": {
           "always": true
         },
@@ -115,6 +119,7 @@
     ],
     "oo": [
       {
+        "desc": "alias for bishorgo :",
         "when": {
           "always": true
         },
