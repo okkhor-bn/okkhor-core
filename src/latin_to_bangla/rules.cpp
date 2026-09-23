@@ -5,67 +5,11 @@
 
 namespace okkhor::latin_to_bangla {
 
-void RuleEngine::load_string(const std::string &json_str, Mapping &mapping) {
-  json::Value doc = json::parse(json_str);
-  const json::Value *rules_node = doc.find("rules");
-  if (!rules_node || !rules_node->is_object())
-    throw std::runtime_error("Invalid rulebook format: missing 'rules' object");
 
-  rules_.clear();
+void RuleEngine::load(const json::Value &doc, Mapping &mapping) {
+  if (!doc.is_object())
+    throw std::runtime_error("Invalid rulebook format: expected JSON object");
 
-  for (const auto &[key, rule_array] : rules_node->as_object()) {
-    if (!rule_array.is_array())
-      continue;
-
-    // Ensure tokenizer recognizes multi-char keys (e.g., "kkh", "t''")
-    if (!mapping.lookup(key)) {
-      mapping.add_rule(key, Rule{TokenType::Special, "", key});
-    }
-
-    std::vector<ContextRule> parsed_rules;
-    for (const json::Value &r : rule_array.as_array()) {
-      ContextRule cr;
-
-      if (const json::Value *when = r.find("when")) {
-        const json::Value *always_v = when->find("always");
-        cr.condition.always =
-            always_v && always_v->is_bool() && always_v->as_bool();
-
-        const json::Value *ws_v = when->find("word-start");
-        cr.condition.word_start = ws_v && ws_v->is_bool() && ws_v->as_bool();
-
-        const json::Value *ac_v = when->find("after-consonant");
-        cr.condition.after_consonant =
-            ac_v && ac_v->is_bool() && ac_v->as_bool();
-
-        const json::Value *av_v = when->find("after-vowel");
-        cr.condition.after_vowel = av_v && av_v->is_bool() && av_v->as_bool();
-      }
-
-      if (const json::Value *act = r.find("action")) {
-        std::string type_str = act->string_or("type", "");
-        if (type_str == "token") {
-          cr.action.type = Action::Type::TokenList;
-          if (const json::Value *vals = act->find("value");
-              vals && vals->is_array()) {
-            for (const auto &v : vals->as_array()) {
-              if (v.is_string())
-                cr.action.token_values.push_back(v.as_string());
-            }
-          }
-        } else if (type_str == "literal") {
-          cr.action.type = Action::Type::Literal;
-          cr.action.literal_value = act->string_or("value", "");
-        }
-      }
-      parsed_rules.push_back(cr);
-    }
-    rules_[key] = parsed_rules;
-  }
-}
-
-void RuleEngine::load_file(const std::string &path, Mapping &mapping) {
-  json::Value doc = json::parse_file(path);
   const json::Value *rules_node = doc.find("rules");
   if (!rules_node || !rules_node->is_object())
     throw std::runtime_error("Invalid rulebook format: missing 'rules' object");
@@ -187,7 +131,7 @@ std::vector<Token> RuleEngine::apply(const std::vector<Token> &tokens,
               const Rule *m_rule = mapping.lookup(sub_latin);
 
               if (m_rule) {
-               const Rule *c_rule = mapping.lookup(m_rule->canonical_key);
+                const Rule *c_rule = mapping.lookup(m_rule->canonical_key);
                 Token sub_t;
 
                 sub_t.type = m_rule->type;

@@ -101,21 +101,13 @@ bool token_matches(const Token &input, const Token &pattern) {
 
 } // namespace
 
-void RuleEngine::load_file(const std::string &path, const Mapping &mapping) {
+void RuleEngine::load(const json::Value &doc, const Mapping &mapping) {
 
-  std::ifstream file(path, std::ios::binary);
-
-  if (!file) {
-
-    throw std::runtime_error("could not open rules file: " + path);
+  if (!doc.is_object()) {
+    throw std::runtime_error("Invalid rulebook format: expected JSON object");
   }
 
-  std::string source((std::istreambuf_iterator<char>(file)),
-                     std::istreambuf_iterator<char>());
-
-  const json::Value document = json::parse(source);
-
-  const json::Value *rules = document.find("rules");
+  const json::Value *rules = doc.find("rules");
 
   if (!rules || !rules->is_object()) {
 
@@ -156,24 +148,6 @@ void RuleEngine::load_file(const std::string &path, const Mapping &mapping) {
                                  "' is missing 'action'");
       }
 
-      /*
-       * Only unconditional rules are reversible.
-       *
-       * Example:
-       *
-       *     ",," -> [",.", "|"]
-       *
-       * becomes:
-       *
-       *     [",.", "|"] -> Special(",,")
-       *
-       * Contextual rules such as:
-       *
-       *     w -> ও at word-start
-       *
-       * are not reversed automatically.
-       */
-
       if (!is_always_rule(*when))
         continue;
 
@@ -197,11 +171,6 @@ void RuleEngine::load_file(const std::string &path, const Mapping &mapping) {
 
       const std::string action_type = type->as_string();
 
-      /*
-       * At the moment only token actions
-       * are automatically reversible.
-       */
-
       if (action_type != "token")
         continue;
 
@@ -212,16 +181,6 @@ void RuleEngine::load_file(const std::string &path, const Mapping &mapping) {
                                  key + "' must have an array value");
       }
 
-      /*
-       * Forward:
-       *
-       *     key -> action.value
-       *
-       * Reverse:
-       *
-       *     action.value -> key
-       */
-
       std::vector<Token> pattern = parse_token_list(*value, mapping);
 
       if (pattern.empty()) {
@@ -229,18 +188,6 @@ void RuleEngine::load_file(const std::string &path, const Mapping &mapping) {
         throw std::runtime_error("rules.json: reversible rule '" + key +
                                  "' has an empty replacement");
       }
-
-      /*
-       * Normally the reverse replacement is
-       * a Mapping token.
-       *
-       * EXCEPTION:
-       *
-       *     ",,"
-       *
-       * is a Special macro, not a Mapping
-       * primitive.
-       */
 
       std::vector<Token> replacement;
 

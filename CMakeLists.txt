@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.16)
 
 project(okkhor LANGUAGES CXX)
@@ -11,6 +12,53 @@ if(MSVC)
 else()
     add_compile_options(-Wall -Wextra)
 endif()
+
+# ============================================================
+# Embedded default data
+# ============================================================
+
+set(OKKHOR_DATA_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/data"
+)
+
+set(OKKHOR_GENERATED_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/generated"
+)
+
+set(OKKHOR_DEFAULT_DATA_HPP
+    "${OKKHOR_GENERATED_DIR}/default_data.hpp"
+)
+
+file(READ
+    "${OKKHOR_DATA_DIR}/vowels.json"
+    OKKHOR_VOWELS_JSON
+)
+
+file(READ
+    "${OKKHOR_DATA_DIR}/consonants.json"
+    OKKHOR_CONSONANTS_JSON
+)
+
+file(READ
+    "${OKKHOR_DATA_DIR}/controls.json"
+    OKKHOR_CONTROLS_JSON
+)
+
+file(READ
+    "${OKKHOR_DATA_DIR}/punctuation.json"
+    OKKHOR_PUNCTUATION_JSON
+)
+
+file(READ
+    "${OKKHOR_DATA_DIR}/rules.json"
+    OKKHOR_RULES_JSON
+)
+
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/default_data.hpp.in"
+    "${OKKHOR_DEFAULT_DATA_HPP}"
+    @ONLY
+)
 
 # ============================================================
 # Core library
@@ -36,14 +84,16 @@ add_library(okkhor_core
     src/bangla_to_latin/parser.cpp
     src/bangla_to_latin/renderer.cpp
     src/bangla_to_latin/rules.cpp
+
+    # Generated default data
+    "${OKKHOR_DEFAULT_DATA_HPP}"
 )
 
 target_include_directories(okkhor_core PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
 
-target_compile_definitions(okkhor_core PUBLIC
-    OKKHOR_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+
+    "${OKKHOR_GENERATED_DIR}"
 )
 
 # ============================================================
@@ -51,18 +101,13 @@ target_compile_definitions(okkhor_core PUBLIC
 # ============================================================
 
 add_executable(okkhor
+
     src/main.cpp
 )
 
 target_link_libraries(okkhor PRIVATE
-    okkhor_core
-)
 
-# Keep a copy of the mapping data next to the binary.
-add_custom_command(TARGET okkhor POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_CURRENT_SOURCE_DIR}/data
-    $<TARGET_FILE_DIR:okkhor>/data
+    okkhor_core
 )
 
 # ============================================================
@@ -71,20 +116,24 @@ add_custom_command(TARGET okkhor POST_BUILD
 
 enable_testing()
 
-
 add_executable(engine_tests
+
     tests/engine_tests.cpp
 )
 
 target_link_libraries(engine_tests PRIVATE
+
     okkhor_core
 )
 
 target_include_directories(engine_tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests
+
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests"
 )
 
 add_test(
+
     NAME engine
+
     COMMAND engine_tests
 )

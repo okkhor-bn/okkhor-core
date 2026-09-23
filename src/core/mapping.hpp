@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "core/token.hpp"
+#include "util/json.hpp"
 
 namespace okkhor {
 
@@ -43,7 +44,12 @@ class Mapping {
 public:
   // Loads vowels.json, consonants.json, controls.json,
   // and punctuation.json.
-  static Mapping load(const std::string &data_dir);
+  static Mapping load(
+        const json::Value& vowels_json,
+        const json::Value& consonants_json,
+        const json::Value& controls_json,
+        const json::Value& punctuation_json
+    );
 
   // Looks up a Latin key, including aliases.
   const Rule *lookup(const std::string &key) const;

@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 
+#include <iostream>
 #include <type_traits>
 
 namespace okkhor::latin_to_bangla {
@@ -68,6 +69,8 @@ std::string Renderer::render(const IndependentVowel &v) const {
 
   const VowelEntry *e = mapping_->vowel(v.value.key);
 
+
+
   std::string out = e->independent;
 
   for (const Accent &a : v.accents) {
@@ -95,10 +98,8 @@ std::string Renderer::render(const Element &element) const {
         if constexpr (std::is_same_v<T, Literal>) {
 
           return e.text;
-
         } else {
-
-          return this->render(e);
+          return render(e);
         }
       },
       element);

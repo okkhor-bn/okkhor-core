@@ -39,10 +39,6 @@ std::string capitalize_first_ascii(const std::string &key) {
 } // namespace
 
 void Mapping::add_rule(const std::string &key, Rule rule) {
-  // std::cout << "key=[" << key << "] "
-  //           << "type=[" << token_type_name(rule.type) << "] "
-  //           << "canonical=[" << rule.canonical_key << "] "
-  //           << "literal=[" << rule.literal << "]\n";
   if (key.empty())
     throw std::runtime_error("empty key in mapping data");
 
@@ -96,7 +92,11 @@ const OtherEntry *Mapping::accent(const std::string &canonical_key) const {
   return &it->second;
 }
 
-Mapping Mapping::load(const std::string &data_dir) {
+Mapping Mapping::load(const json::Value &vowels_json,
+                      const json::Value &consonants_json,
+                      const json::Value &controls_json,
+                      const json::Value &punctuation_json) {
+
   Mapping m;
 
   // =========================================================
@@ -104,7 +104,7 @@ Mapping Mapping::load(const std::string &data_dir) {
   // =========================================================
 
   {
-    json::Value doc = json::parse_file(join(data_dir, "vowels.json"));
+    json::Value doc = vowels_json;
 
     if (!doc.is_object())
       throw std::runtime_error("vowels.json: expected an object");
@@ -182,7 +182,7 @@ Mapping Mapping::load(const std::string &data_dir) {
   // consonants.json
   // =========================================================
   {
-    json::Value doc = json::parse_file(join(data_dir, "consonants.json"));
+    json::Value doc = consonants_json;
 
     if (!doc.is_object())
       throw std::runtime_error("consonants.json: expected an object");
@@ -253,7 +253,7 @@ Mapping Mapping::load(const std::string &data_dir) {
   // =========================================================
 
   {
-    json::Value doc = json::parse_file(join(data_dir, "controls.json"));
+    json::Value doc = controls_json;
 
     if (!doc.is_object())
       throw std::runtime_error("controls.json: expected an object");
@@ -368,7 +368,7 @@ Mapping Mapping::load(const std::string &data_dir) {
   // =========================================================
 
   {
-    json::Value doc = json::parse_file(join(data_dir, "punctuation.json"));
+    json::Value doc = punctuation_json;
 
     if (!doc.is_object())
       throw std::runtime_error("punctuation.json: expected an object");
@@ -384,7 +384,10 @@ Mapping Mapping::load(const std::string &data_dir) {
                       });
 
       if (!e.value.empty())
-        m.add_rule(e.value, Rule{TokenType::Punctuation, key, });
+        m.add_rule(e.value, Rule{
+                                TokenType::Punctuation,
+                                key,
+                            });
     }
   }
 
