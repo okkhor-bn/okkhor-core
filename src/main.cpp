@@ -12,6 +12,7 @@
 #include <type_traits>
 #include <variant>
 #include <vector>
+#include <memory>
 
 #include "core/okkhor.hpp"
 
