@@ -123,17 +123,6 @@
           "value": [":"]
         }
       }
-    ],
-    "h'": [
-      {
-        "when": {
-          "word-start": true
-        },
-        "action": {
-          "type": "literal",
-          "value": "ঽ"
-        }
-      }
     ]
   }
 }
