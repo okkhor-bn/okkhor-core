@@ -381,12 +381,9 @@ Mapping Mapping::load(const json::Value &vowels_json,
 
       m.others_.emplace(key, e);
 
-      m.add_rule(key, Rule{
-                          TokenType::Punctuation,
-                          key,
-                      });
+      m.add_rule(key, Rule{TokenType::Punctuation, key, ""});
 
-      if (!e.value.empty())
+      if (!e.value.empty() && e.value != key)
         m.add_rule(e.value, Rule{
                                 TokenType::Punctuation,
                                 key,

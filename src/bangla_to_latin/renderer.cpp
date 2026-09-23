@@ -43,15 +43,6 @@ std::string Renderer::render(const OrthographicUnit &unit) const {
     out += unit.vowel->value.key;
   }
 
-  // ---------------------------------------------------------
-  // Explicit hasanta
-  //
-  // Hasanta is always represented by ",.".
-  //
-  //     ক্ -> k,.
-  //
-  // Never emit ",,".
-  // ---------------------------------------------------------
 
   if (unit.explicit_hasanta) {
 

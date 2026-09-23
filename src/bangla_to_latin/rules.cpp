@@ -31,31 +31,7 @@ Token make_token(const std::string &key, const Mapping &mapping) {
   return token;
 }
 
-/*
- * Create a rule-engine Special token.
- *
- * Special tokens are NOT Mapping primitives.
- *
- * For example:
- *
- *     ",,"
- *
- * is a macro which represents:
- *
- *     Hasanta + ZWNJ
- *
- * Therefore it cannot be created through Mapping::lookup().
- */
-Token make_special_token(const std::string &value) {
 
-  Token token;
-
-  token.type = TokenType::Special;
-  token.canonical_key = value;
-  token.value = value;
-
-  return token;
-}
 
 std::vector<Token> parse_token_list(const json::Value &value,
                                     const Mapping &mapping) {
@@ -190,15 +166,7 @@ void RuleEngine::load(const json::Value &doc, const Mapping &mapping) {
       }
 
       std::vector<Token> replacement;
-
-      if (key == ",,") {
-
-        replacement.push_back(make_special_token(",,"));
-
-      } else {
-
-        replacement.push_back(make_token(key, mapping));
-      }
+      replacement.push_back(make_token(key, mapping));
 
       Rule reverse_rule;
 
