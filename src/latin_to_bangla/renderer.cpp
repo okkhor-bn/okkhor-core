@@ -51,7 +51,7 @@ std::string Renderer::render(const OrthographicUnit &unit) const {
 
   for (const Accent &a : unit.accents) {
 
-    const OtherEntry *e = mapping_->accent(a.key);
+    const OtherEntry *e = mapping_->other(a.key);
 
     out += e->value;
   }
@@ -75,7 +75,7 @@ std::string Renderer::render(const IndependentVowel &v) const {
 
   for (const Accent &a : v.accents) {
 
-    const OtherEntry *accent = mapping_->accent(a.key);
+    const OtherEntry *accent = mapping_->other(a.key);
 
     out += accent->value;
   }

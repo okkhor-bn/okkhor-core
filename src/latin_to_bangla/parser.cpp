@@ -5,7 +5,7 @@
 
 namespace okkhor::latin_to_bangla {
 
-Document parse(const std::vector<Token> &tokens) {
+Document parse(const std::vector<Token> &tokens, const Mapping &mapping) {
 
   Document doc;
 
@@ -101,9 +101,10 @@ Document parse(const std::vector<Token> &tokens) {
 
     case TokenType::Hasanta: {
 
-      bool next_is_zwnj = tokens.size() > i + 1 && tokens[i + 1].type == TokenType::ZWNJ;
+      bool next_is_zwnj =
+          tokens.size() > i + 1 && tokens[i + 1].type == TokenType::ZWNJ;
 
-      if(next_is_zwnj){
+      if (next_is_zwnj) {
         add_hasanta(*cur);
         break;
       }
@@ -137,17 +138,25 @@ Document parse(const std::vector<Token> &tokens) {
       break;
     }
 
+    case TokenType::Punctuation: {
+      flush();
+      const OtherEntry *e = mapping.other(t.canonical_key);
+      if (!e) {
+        throw std::runtime_error("Unknown punctuation(" + t.canonical_key + ")");
+      }
+      doc.push_back(Literal{e->value });
+      break;
+    }
+
     case TokenType::Whitespace:
-    case TokenType::Punctuation:
     case TokenType::Unknown:
     default: {
 
-      // Whitespace, punctuation and unknown input
+      // Whitespace and unknown input
       // close the current unit and pass through
       // untouched.
 
       flush();
-
       doc.push_back(Literal{t.value});
 
       break;

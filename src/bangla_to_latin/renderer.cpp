@@ -5,174 +5,126 @@
 
 namespace okkhor::bangla_to_latin {
 
-std::string Renderer::render(
-    const OrthographicUnit& unit) const {
+std::string Renderer::render(const OrthographicUnit &unit) const {
 
-    std::string out;
+  std::string out;
 
-    // ---------------------------------------------------------
-    // Base consonant
-    // ---------------------------------------------------------
+  // ---------------------------------------------------------
+  // Base consonant
+  // ---------------------------------------------------------
 
-    if (const auto* base =
-            std::get_if<BaseConsonant>(&unit.base)) {
+  if (const auto *base = std::get_if<BaseConsonant>(&unit.base)) {
 
-        out += base->value.key;
-    }
+    out += base->value.key;
+  }
 
-    // ---------------------------------------------------------
-    // Structural conjuncts
-    //
-    // The hasanta between consonants is structural and therefore
-    // is NOT emitted in the Latin representation.
-    //
-    //     ক্ন -> kn
-    //     ক্ম -> km
-    //     ক্ষ -> kSh
-    // ---------------------------------------------------------
+  // ---------------------------------------------------------
+  // Structural conjuncts
+  //
+  // The hasanta between consonants is structural and therefore
+  // is NOT emitted in the Latin representation.
+  //
+  //     ক্ন -> kn
+  //     ক্ম -> km
+  //     ক্ষ -> kSh
+  // ---------------------------------------------------------
 
-    for (const DependentConsonant& dc :
-         unit.conjuncts) {
+  for (const DependentConsonant &dc : unit.conjuncts) {
 
-        out += dc.value.key;
-    }
+    out += dc.value.key;
+  }
 
-    // ---------------------------------------------------------
-    // Dependent vowel
-    // ---------------------------------------------------------
+  // ---------------------------------------------------------
+  // Dependent vowel
+  // ---------------------------------------------------------
 
-    if (unit.vowel) {
+  if (unit.vowel) {
 
-        out += unit.vowel->value.key;
-    }
+    out += unit.vowel->value.key;
+  }
 
-    // ---------------------------------------------------------
-    // Explicit hasanta
-    //
-    // Hasanta is always represented by ",.".
-    //
-    //     ক্ -> k,.
-    //
-    // Never emit ",,".
-    // ---------------------------------------------------------
+  // ---------------------------------------------------------
+  // Explicit hasanta
+  //
+  // Hasanta is always represented by ",.".
+  //
+  //     ক্ -> k,.
+  //
+  // Never emit ",,".
+  // ---------------------------------------------------------
 
-    if (unit.explicit_hasanta) {
+  if (unit.explicit_hasanta) {
 
-        out += ",.";
-    }
+    out += mapping_->controls().at("hasanta");
+  }
 
-    // ---------------------------------------------------------
-    // ZWNJ
-    //
-    // ZWNJ is always represented by "|".
-    //
-    // Therefore:
-    //
-    //     ক‌  -> k|
-    //     ক্‌ -> k,.|
-    //
-    // Never combine them into ",,".
-    // ---------------------------------------------------------
+  if (unit.zwnj_after) {
+    out += mapping_->controls().at("zwnj");
+  }
 
-    if (unit.zwnj_after) {
+  if (unit.zwj_after) {
+    out += "~";
+  }
 
-        out += "|";
-    }
+  for (const Accent &accent : unit.accents) {
 
-    // ---------------------------------------------------------
-    // ZWJ
-    // ---------------------------------------------------------
+    out += accent.key;
+  }
 
-    if (unit.zwj_after) {
-
-        out += "~";
-    }
-
-    // ---------------------------------------------------------
-    // Accents
-    // ---------------------------------------------------------
-
-    for (const Accent& accent :
-         unit.accents) {
-
-        out += accent.key;
-    }
-
-    return out;
+  return out;
 }
 
-std::string Renderer::render(
-    const IndependentVowel& vowel) const {
+std::string Renderer::render(const IndependentVowel &vowel) const {
 
-    std::string out;
+  std::string out;
 
-    // ---------------------------------------------------------
-    // Independent vowel
-    // ---------------------------------------------------------
+  out += vowel.value.key;
 
-    out += vowel.value.key;
+  for (const Accent &accent : vowel.accents) {
 
-    // ---------------------------------------------------------
-    // Accents
-    // ---------------------------------------------------------
+    out += accent.key;
+  }
 
-    for (const Accent& accent :
-         vowel.accents) {
+  if (vowel.zwnj_after) {
 
-        out += accent.key;
-    }
+    out += mapping_->controls().at("zwnj");
+  }
 
-    // ---------------------------------------------------------
-    // ZWNJ / ZWJ
-    // ---------------------------------------------------------
+  if (vowel.zwj_after) {
 
-    if (vowel.zwnj_after) {
+    out += "~";
+  }
 
-        out += "|";
-    }
-
-    if (vowel.zwj_after) {
-
-        out += "~";
-    }
-
-    return out;
+  return out;
 }
 
-std::string Renderer::render(
-    const Element& element) const {
+std::string Renderer::render(const Element &element) const {
 
-    return std::visit(
-        [this](const auto& e) -> std::string {
+  return std::visit(
+      [this](const auto &e) -> std::string {
+        using T = std::decay_t<decltype(e)>;
 
-            using T = std::decay_t<decltype(e)>;
+        if constexpr (std::is_same_v<T, Literal>) {
 
-            if constexpr (
-                std::is_same_v<T, Literal>) {
+          return e.text;
+        } else {
 
-                return e.text;
-            }
-            else {
-
-                return render(e);
-            }
-        },
-        element
-    );
+          return render(e);
+        }
+      },
+      element);
 }
 
-std::string Renderer::render(
-    const Document& document) const {
+std::string Renderer::render(const Document &document) const {
 
-    std::string out;
+  std::string out;
 
-    for (const Element& element :
-         document) {
+  for (const Element &element : document) {
 
-        out += render(element);
-    }
+    out += render(element);
+  }
 
-    return out;
+  return out;
 }
 
 } // namespace okkhor::bangla_to_latin

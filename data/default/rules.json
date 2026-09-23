@@ -23,6 +23,18 @@
       }
     ],
 
+    "ggg": [
+      {
+        "when": {
+          "always": true
+        },
+        "action": {
+          "type": "token",
+          "value": ["g", "g"]
+        }
+      }
+    ],
+
     "ng": [
       {
         "when": {
@@ -63,7 +75,52 @@
         },
         "action": {
           "type": "token",
-          "value": [",.", "|"]
+          "value": [".,", ";"]
+        }
+      }
+    ],
+    ";;": [
+      {
+        "when": {
+          "always": true
+        },
+        "action": {
+          "type": "literal",
+          "value": ";"
+        }
+      }
+    ],
+
+    "rya": [
+      {
+        "when": {
+          "always": true
+        },
+        "action": {
+          "type": "token",
+          "value": ["r", ";", "`", "y", "a"]
+        }
+      }
+    ],
+    "..": [
+      {
+        "when": {
+          "always": true
+        },
+        "action": {
+          "type": "literal",
+          "value": "."
+        }
+      }
+    ],
+    "oo": [
+      {
+        "when": {
+          "always": true
+        },
+        "action": {
+          "type": "token",
+          "value": [":"]
         }
       }
     ]

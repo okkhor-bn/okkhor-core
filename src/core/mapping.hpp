@@ -13,22 +13,22 @@
 namespace okkhor {
 
 struct VowelEntry {
-  std::string canonical_key;       // canonical Latin key
-  std::string independent; // "অ", "আ", ...
-  std::string dependent;   // "", "া", ...
+  std::string canonical_key; // canonical Latin key
+  std::string independent;   // "অ", "আ", ...
+  std::string dependent;     // "", "া", ...
   std::vector<std::string> aliases;
 };
 
 struct ConsonantEntry {
   std::string canonical_key; // canonical Latin key
-  std::string base;  // "ক"
-  std::string fola;  // optional rendering of dcons inside conjunct
+  std::string base;          // "ক"
+  std::string fola;          // optional rendering of dcons inside conjunct
   std::vector<std::string> aliases;
 };
 
 struct OtherEntry {
   std::string canonical_key; // canonical Latin key
-  std::string value;  // "ং", "ঁ", "ঃ"
+  std::string value;         // "ং", "ঁ", "ঃ"
   std::vector<std::string> aliases;
 };
 
@@ -36,20 +36,18 @@ struct OtherEntry {
 struct Rule {
   TokenType type = TokenType::Unknown;
   std::string canonical_key;
-  std::string literal;
   std::string value;
+  std::string literal;
 };
 
 class Mapping {
 public:
   // Loads vowels.json, consonants.json, controls.json,
   // and punctuation.json.
-  static Mapping load(
-        const json::Value& vowels_json,
-        const json::Value& consonants_json,
-        const json::Value& controls_json,
-        const json::Value& punctuation_json
-    );
+  static Mapping load(const json::Value &vowels_json,
+                      const json::Value &consonants_json,
+                      const json::Value &controls_json,
+                      const json::Value &punctuation_json);
 
   // Looks up a Latin key, including aliases.
   const Rule *lookup(const std::string &key) const;
@@ -59,7 +57,7 @@ public:
   // Canonical-key lookup.
   const VowelEntry *vowel(const std::string &canonical_key) const;
   const ConsonantEntry *consonant(const std::string &canonical_key) const;
-  const OtherEntry *accent(const std::string &canonical_key) const;
+  const OtherEntry *other(const std::string &canonical_key) const;
 
   const std::unordered_map<std::string, VowelEntry> &vowels() const {
     return vowels_;
@@ -69,10 +67,13 @@ public:
     return consonants_;
   }
 
-  const std::unordered_map<std::string, OtherEntry> &accents() const {
+  const std::unordered_map<std::string, OtherEntry> &others() const {
     return others_;
   }
 
+  const std::unordered_map<std::string, std::string> &controls() const {
+    return controls_;
+  }
 
   void add_rule(const std::string &key, Rule rule);
 
@@ -85,6 +86,8 @@ private:
   std::unordered_map<std::string, VowelEntry> vowels_;
   std::unordered_map<std::string, ConsonantEntry> consonants_;
   std::unordered_map<std::string, OtherEntry> others_;
+
+  std::unordered_map<std::string, std::string> controls_;
 
   std::size_t max_key_len_ = 1;
 };

@@ -11,13 +11,13 @@ int main() {
   // -------------------------------------------------------------------------
 
   testing::check("Latin -> Bangla: explicit hasanta",
-                 engine.transliterate_latin_to_bangla("k,."), "ক্");
+                 engine.transliterate_latin_to_bangla("k.,"), "ক্");
 
   testing::check("Latin -> Bangla: hasanta + ZWNJ macro",
                  engine.transliterate_latin_to_bangla("k,,"), "ক্‌");
 
   testing::check("Latin -> Bangla: ZWNJ",
-                 engine.transliterate_latin_to_bangla("k|"), "ক\u200C");
+                 engine.transliterate_latin_to_bangla("k;"), "ক\u200C");
 
   testing::check("Latin -> Bangla: ZWJ",
                  engine.transliterate_latin_to_bangla("k~"), "ক~");
@@ -27,13 +27,13 @@ int main() {
   // -------------------------------------------------------------------------
 
   testing::check("Bangla -> Latin: explicit hasanta",
-                 engine.transliterate_bangla_to_latin("ক্"), "k,.");
+                 engine.transliterate_bangla_to_latin("ক্"), "k.,");
 
   testing::check("Bangla -> Latin: hasanta + ZWNJ macro",
                  engine.transliterate_bangla_to_latin("ক্‌"), "k,,");
 
   testing::check("Bangla -> Latin: ZWNJ",
-                 engine.transliterate_bangla_to_latin("ক\u200C"), "k|");
+                 engine.transliterate_bangla_to_latin("ক\u200C"), "k;");
 
   // -------------------------------------------------------------------------
   // Round trip: structural controls
@@ -156,7 +156,8 @@ int main() {
   // Original hard case
   // -------------------------------------------------------------------------
 
-  const std::string hard = "ক্ষ্ম্যজ্ঞ্যন্ত্‌র্য্যশ্চ্ছ্বঙ্ক্ষ্ট্র্দ্ধ্ব্যাঁক্‌ন্‌ম্গ্ন্ত্র্যৌক্ক্হৃঙ্ঘ্"
+  const std::string hard = "ক্ষ্ম্যজ্ঞ্যন্ত্‌র্য্যশ্চ্ছ্বঙ্ক্ষ্ট্র্দ্ধ্ব্যাঁক্‌ন্‌ম্গ্ন্ত্র্যৌক্ক্হৃঙ্ঘ"
+                           "্"
                            "ন"
                            "্"
                            "য";
@@ -174,9 +175,9 @@ int main() {
                  soft);
 
   testing::check("Round trip: hard + soft",
-                engine.transliterate_latin_to_bangla(
-                    engine.transliterate_bangla_to_latin(hard + soft)),
-                hard + soft);
+                 engine.transliterate_latin_to_bangla(
+                     engine.transliterate_bangla_to_latin(hard + soft)),
+                 hard + soft);
 
   return testing::report("engine");
 }

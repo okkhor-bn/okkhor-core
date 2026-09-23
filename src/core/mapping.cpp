@@ -83,7 +83,7 @@ Mapping::consonant(const std::string &canonical_key) const {
   return &it->second;
 }
 
-const OtherEntry *Mapping::accent(const std::string &canonical_key) const {
+const OtherEntry *Mapping::other(const std::string &canonical_key) const {
   auto it = others_.find(canonical_key);
 
   if (it == others_.end())
@@ -284,6 +284,7 @@ Mapping Mapping::load(const json::Value &vowels_json,
           throw std::runtime_error("duplicate control key: " + key);
         m.others_.emplace(key, e);
         m.add_rule(key, Rule{type, key, ""});
+        m.controls_.emplace(section, key);
 
         // Reverse representation:
         // Bangla Unicode -> same semantic token
@@ -377,6 +378,8 @@ Mapping Mapping::load(const json::Value &vowels_json,
       OtherEntry e;
       e.canonical_key = key;
       e.value = out.as_string();
+
+      m.others_.emplace(key, e);
 
       m.add_rule(key, Rule{
                           TokenType::Punctuation,

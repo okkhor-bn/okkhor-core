@@ -83,7 +83,7 @@ void print_structure(const okkhor::Mapping &mapping,
             }
 
             for (const auto &accent : unit.accents) {
-              const auto *entry = mapping.accent(accent.key);
+              const auto *entry = mapping.other(accent.key);
 
               std::cout << " +accent(";
 

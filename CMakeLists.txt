@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.16)
 
 project(okkhor LANGUAGES CXX)
@@ -13,13 +12,35 @@ else()
     add_compile_options(-Wall -Wextra)
 endif()
 
-# ============================================================
-# Embedded default data
-# ============================================================
 
-set(OKKHOR_DATA_DIR
-    "${CMAKE_CURRENT_SOURCE_DIR}/data"
+# ------------------------------------------------------------
+# Data files
+# ------------------------------------------------------------
+
+set(OKKHOR_DEFAULT_DATA_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/data/default"
 )
+
+set(OKKHOR_DATA_FILES
+    "${OKKHOR_DEFAULT_DATA_DIR}/vowels.json"
+    "${OKKHOR_DEFAULT_DATA_DIR}/consonants.json"
+    "${OKKHOR_DEFAULT_DATA_DIR}/controls.json"
+    "${OKKHOR_DEFAULT_DATA_DIR}/punctuation.json"
+    "${OKKHOR_DEFAULT_DATA_DIR}/rules.json"
+)
+
+# Tell CMake to re-run configuration whenever one of the
+# JSON data files changes.
+set_property(
+    DIRECTORY APPEND
+    PROPERTY CMAKE_CONFIGURE_DEPENDS
+    ${OKKHOR_DATA_FILES}
+)
+
+
+# ------------------------------------------------------------
+# Generate embedded default data header
+# ------------------------------------------------------------
 
 set(OKKHOR_GENERATED_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/generated"
@@ -30,27 +51,27 @@ set(OKKHOR_DEFAULT_DATA_HPP
 )
 
 file(READ
-    "${OKKHOR_DATA_DIR}/vowels.json"
+    "${OKKHOR_DEFAULT_DATA_DIR}/vowels.json"
     OKKHOR_VOWELS_JSON
 )
 
 file(READ
-    "${OKKHOR_DATA_DIR}/consonants.json"
+    "${OKKHOR_DEFAULT_DATA_DIR}/consonants.json"
     OKKHOR_CONSONANTS_JSON
 )
 
 file(READ
-    "${OKKHOR_DATA_DIR}/controls.json"
+    "${OKKHOR_DEFAULT_DATA_DIR}/controls.json"
     OKKHOR_CONTROLS_JSON
 )
 
 file(READ
-    "${OKKHOR_DATA_DIR}/punctuation.json"
+    "${OKKHOR_DEFAULT_DATA_DIR}/punctuation.json"
     OKKHOR_PUNCTUATION_JSON
 )
 
 file(READ
-    "${OKKHOR_DATA_DIR}/rules.json"
+    "${OKKHOR_DEFAULT_DATA_DIR}/rules.json"
     OKKHOR_RULES_JSON
 )
 
@@ -60,80 +81,76 @@ configure_file(
     @ONLY
 )
 
-# ============================================================
+
+# ------------------------------------------------------------
 # Core library
-# ============================================================
+# ------------------------------------------------------------
 
 add_library(okkhor_core
-
-    # Core
     src/core/mapping.cpp
     src/core/orthography.cpp
     src/core/okkhor.cpp
     src/core/tokenizer.cpp
 
-    # JSON
     src/util/json.cpp
 
-    # Latin -> Bangla
     src/latin_to_bangla/parser.cpp
     src/latin_to_bangla/renderer.cpp
     src/latin_to_bangla/rules.cpp
 
-    # Bangla -> Latin
     src/bangla_to_latin/parser.cpp
     src/bangla_to_latin/renderer.cpp
     src/bangla_to_latin/rules.cpp
 
-    # Generated default data
     "${OKKHOR_DEFAULT_DATA_HPP}"
 )
 
-target_include_directories(okkhor_core PUBLIC
-
+target_include_directories(okkhor_core
+    PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src"
-
     "${OKKHOR_GENERATED_DIR}"
 )
 
-# ============================================================
-# Command-line frontend
-# ============================================================
+
+# ------------------------------------------------------------
+# CLI
+# ------------------------------------------------------------
 
 add_executable(okkhor
-
     src/main.cpp
 )
 
-target_link_libraries(okkhor PRIVATE
-
+target_link_libraries(
+    okkhor
+    PRIVATE
     okkhor_core
 )
 
-# ============================================================
+
+# ------------------------------------------------------------
 # Tests
-# ============================================================
+# ------------------------------------------------------------
 
 enable_testing()
 
-add_executable(engine_tests
-
+add_executable(
+    engine_tests
     tests/engine_tests.cpp
 )
 
-target_link_libraries(engine_tests PRIVATE
-
+target_link_libraries(
+    engine_tests
+    PRIVATE
     okkhor_core
 )
 
-target_include_directories(engine_tests PRIVATE
-
+target_include_directories(
+    engine_tests
+    PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/tests"
 )
 
 add_test(
-
     NAME engine
-
     COMMAND engine_tests
 )

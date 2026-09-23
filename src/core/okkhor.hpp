@@ -67,7 +67,7 @@ public:
     std::vector<Token> raw_tokens = tokenize(input, mapping_);
     std::vector<Token> rewritten_tokens =
         latin_to_bangla_rules_.apply(raw_tokens, mapping_);
-    return latin_to_bangla::parse(rewritten_tokens);
+    return latin_to_bangla::parse(rewritten_tokens, mapping_);
   }
 
   std::string transliterate_latin_to_bangla(const std::string &input) const {
