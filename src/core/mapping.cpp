@@ -39,10 +39,13 @@ std::string capitalize_first_ascii(const std::string &key) {
 } // namespace
 
 void Mapping::add_rule(const std::string &key, Rule rule) {
-  // std::cout<<"Mapping::add_rule: key=" << key << " type=" << token_type_name(rule.type)
-  //          << " canonical_key=" << rule.canonical_key
-  //          << " value=" << rule.value << std::endl;
-           
+  // std::cout << "Mapping::add_rule: "
+  //           << "direction="
+  //           << std::bitset<2>(static_cast<uint8_t>(rule.direction))
+  //           << " key=" << key << " type=" << token_type_name(rule.type)
+  //           << " canonical=" << rule.canonical_key << " value=" << rule.value
+  //           << '\n';
+
   if (key.empty())
     throw std::runtime_error("empty key in mapping data");
 
@@ -61,11 +64,13 @@ void Mapping::set_rule(const std::string &key, Rule rule) {
   rules_[key] = std::move(rule);
 }
 
-const Rule *Mapping::lookup(const std::string &key) const {
-
+const Rule *Mapping::lookup(const std::string &key, Direction direction) const {
   auto it = rules_.find(key);
-
-  return it == rules_.end() ? nullptr : &it->second;
+  if (it == rules_.end())
+    return nullptr;
+  if (!supports(it->second.direction, direction))
+    return nullptr;
+  return &it->second;
 }
 
 const VowelEntry *Mapping::vowel(const std::string &canonical_key) const {
@@ -130,16 +135,18 @@ Mapping Mapping::load(const json::Value &vowels_json,
       m.vowels_.emplace(key, e);
 
       // Canonical Latin key.
-      m.add_rule(key, Rule{TokenType::Vowel, key, ""});
+      m.add_rule(key, Rule{TokenType::Vowel, Direction::Forward, key, "", ""});
 
       // Bengali independent vowel.
       if (!e.independent.empty()) {
-        m.add_rule(e.independent, Rule{TokenType::Vowel, key, ""});
+        m.add_rule(e.independent,
+                   Rule{TokenType::Vowel, Direction::Reverse, key, "", ""});
       }
 
       // Bengali dependent vowel sign.
       if (!e.dependent.empty()) {
-        m.add_rule(e.dependent, Rule{TokenType::Vowel, key, ""});
+        m.add_rule(e.dependent,
+                   Rule{TokenType::Vowel, Direction::Reverse, key, "", ""});
       }
     }
 
@@ -158,7 +165,8 @@ Mapping Mapping::load(const json::Value &vowels_json,
 
         const std::string &alias_key = alias.as_string();
 
-        m.add_rule(alias_key, Rule{TokenType::Vowel, key, ""});
+        m.add_rule(alias_key,
+                   Rule{TokenType::Vowel, Direction::Forward, key, "", ""});
       }
     }
 
@@ -177,7 +185,8 @@ Mapping Mapping::load(const json::Value &vowels_json,
 
       if (capitalized != key && !m.rules_.count(capitalized)) {
 
-        m.add_rule(capitalized, Rule{TokenType::Vowel, key, ""});
+        m.add_rule(capitalized,
+                   Rule{TokenType::Vowel, Direction::Forward, key, "", ""});
       }
     }
   }
@@ -208,11 +217,12 @@ Mapping Mapping::load(const json::Value &vowels_json,
       m.consonants_.emplace(key, e);
 
       // Canonical Latin key.
-      m.add_rule(key, Rule{TokenType::Consonant, key, ""});
+      m.add_rule(key, Rule{TokenType::Consonant, Direction::Forward, key, ""});
 
       // Bengali consonant base.
       if (!e.base.empty() && !m.rules_.count(e.base)) {
-        m.add_rule(e.base, Rule{TokenType::Consonant, key, ""});
+        m.add_rule(e.base,
+                   Rule{TokenType::Consonant, Direction::Reverse, key, ""});
       }
     }
 
@@ -232,7 +242,8 @@ Mapping Mapping::load(const json::Value &vowels_json,
 
         const std::string &alias_key = alias.as_string();
 
-        m.add_rule(alias_key, Rule{TokenType::Consonant, key, ""});
+        m.add_rule(alias_key,
+                   Rule{TokenType::Consonant, Direction::Forward, key, "", ""});
       }
     }
 
@@ -247,7 +258,8 @@ Mapping Mapping::load(const json::Value &vowels_json,
 
       if (capitalized != key && !m.rules_.count(capitalized)) {
 
-        m.add_rule(capitalized, Rule{TokenType::Consonant, key, ""});
+        m.add_rule(capitalized,
+                   Rule{TokenType::Consonant, Direction::Forward, key, "", ""});
       }
     }
   }
@@ -287,13 +299,13 @@ Mapping Mapping::load(const json::Value &vowels_json,
         if (m.others_.count(key))
           throw std::runtime_error("duplicate control key: " + key);
         m.others_.emplace(key, e);
-        m.add_rule(key, Rule{type, key, ""});
+        m.add_rule(key, Rule{type, Direction::Forward, key, "", ""});
         m.controls_.emplace(section, key);
 
         // Reverse representation:
         // Bangla Unicode -> same semantic token
         if (!value.empty() && value != key) {
-          m.add_rule(value, Rule{type, key, ""});
+          m.add_rule(value, Rule{type, Direction::Reverse, key, "", ""});
         }
       }
     };
@@ -324,10 +336,12 @@ Mapping Mapping::load(const json::Value &vowels_json,
           throw std::runtime_error("duplicate accent key: " + key);
 
         m.others_.emplace(key, e);
-        m.add_rule(key, Rule{TokenType::Accent, key, ""});
+        m.add_rule(key,
+                   Rule{TokenType::Accent, Direction::Forward, key, "", ""});
 
         if (!e.value.empty() && e.value != key) {
-          m.add_rule(e.value, Rule{TokenType::Accent, key, ""});
+          m.add_rule(e.value,
+                     Rule{TokenType::Accent, Direction::Reverse, key, "", ""});
         }
       }
 
@@ -348,7 +362,8 @@ Mapping Mapping::load(const json::Value &vowels_json,
 
           const std::string &alias_key = alias.as_string();
 
-          m.add_rule(alias_key, Rule{TokenType::Accent, key, ""});
+          m.add_rule(alias_key,
+                     Rule{TokenType::Accent, Direction::Forward, key, "", ""});
         }
       }
 
@@ -362,7 +377,8 @@ Mapping Mapping::load(const json::Value &vowels_json,
 
         if (capitalized != key && !m.rules_.count(capitalized)) {
 
-          m.add_rule(capitalized, Rule{TokenType::Accent, key, ""});
+          m.add_rule(capitalized,
+                     Rule{TokenType::Accent, Direction::Forward, key, "", ""});
         }
       }
     }
@@ -385,13 +401,12 @@ Mapping Mapping::load(const json::Value &vowels_json,
 
       m.others_.emplace(key, e);
 
-      m.add_rule(key, Rule{TokenType::Punctuation, key, ""});
+      m.add_rule(key,
+                 Rule{TokenType::Punctuation, Direction::Forward, key, "", ""});
 
       if (!e.value.empty() && e.value != key)
-        m.add_rule(e.value, Rule{
-                                TokenType::Punctuation,
-                                key,
-                            });
+        m.add_rule(e.value, Rule{TokenType::Punctuation, Direction::Reverse,
+                                 key, "", ""});
     }
   }
 

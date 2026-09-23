@@ -3,15 +3,18 @@
 // Phase 4: Latin phonetic input -> semantic tokens.
 // Longest match wins.
 
+#include "core/mapping.hpp"
+#include "core/token.hpp"
 #include <string>
 #include <vector>
-#include "core/token.hpp"
 
 namespace okkhor {
+enum class WorkingDirection { Forward, Reverse };
 
 class Mapping;
 
-std::vector<Token> tokenize(const std::string &input, const Mapping &mapping);
+std::vector<Token> tokenize(const std::string &input, const Mapping &mapping,
+                            WorkingDirection direction);
 
 const char *token_type_name(TokenType t);
 

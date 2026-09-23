@@ -4,32 +4,22 @@
 #include <vector>
 
 #include "core/mapping.hpp"
-#include "core/token.hpp"
 #include "util/json.hpp"
 
 namespace okkhor::bangla_to_latin {
 
+struct Rule {
+  std::string pattern;
+  std::string replacement;
+};
+
 class RuleEngine {
 public:
-    RuleEngine() = default;
-
-    void load(
-        const json::Value& doc,
-        const Mapping& mapping
-    );
-
-    std::vector<Token> apply(
-        const std::vector<Token>& tokens,
-        const Mapping& mapping
-    ) const;
+  void load(const json::Value &doc, const Mapping &mapping);
+  std::string apply(const std::string &input) const;
 
 private:
-    struct Rule {
-        std::vector<Token> pattern;
-        std::vector<Token> replacement;
-    };
-
-    std::vector<Rule> rules_;
+  std::vector<Rule> rules_;
 };
 
 } // namespace okkhor::bangla_to_latin

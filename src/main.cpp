@@ -1,24 +1,22 @@
 // okkhor - interactive / piped Bangla phonetic transliteration.
 //
-//   okkhor                     read stdin line by line
-//   okkhor amar sonar          Latin -> Bangla
-//   okkhor --reverse আমি       Bangla -> Latin
-//   okkhor --tokens kta        dump the internal representation
+//   okkhor                  read stdin line by line
+//   okkhor amar sonar       Latin -> Bangla
+//   okkhor --reverse আমি    Bangla -> Latin
+//   okkhor --tokens kta     dump the internal representation
 //
 // Latin -> Bangla is the default direction.
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <type_traits>
 #include <variant>
 #include <vector>
-#include <memory>
 
 #include "core/okkhor.hpp"
 
 namespace {
-
-enum class Direction { LatinToBangla, BanglaToLatin };
 
 void print_tokens(const std::vector<okkhor::Token> &tokens) {
   for (const okkhor::Token &token : tokens) {
@@ -27,6 +25,23 @@ void print_tokens(const std::vector<okkhor::Token> &tokens) {
   }
 
   std::cout << "\n";
+}
+
+void print_accents(const okkhor::Mapping &mapping,
+                   const std::vector<okkhor::Accent> &accents) {
+  for (const okkhor::Accent &accent : accents) {
+    const auto *entry = mapping.other(accent.key);
+
+    std::cout << " +accent(";
+
+    if (entry) {
+      std::cout << entry->canonical_key;
+    } else {
+      std::cout << "?";
+    }
+
+    std::cout << ")";
+  }
 }
 
 void print_structure(const okkhor::Mapping &mapping,
@@ -41,8 +56,13 @@ void print_structure(const okkhor::Mapping &mapping,
           if constexpr (std::is_same_v<T, okkhor::OrthographicUnit>) {
             std::cout << " [base=";
 
+            // -------------------------------------------------
+            // Base consonant
+            // -------------------------------------------------
+
             if (const auto *bc =
                     std::get_if<okkhor::BaseConsonant>(&unit.base)) {
+
               const auto *consonant = mapping.consonant(bc->value.key);
 
               if (consonant) {
@@ -50,9 +70,17 @@ void print_structure(const okkhor::Mapping &mapping,
               } else {
                 std::cout << "?";
               }
+
+              // Accents now belong to the consonant itself.
+              print_accents(mapping, bc->value.accents);
+
             } else {
               std::cout << "vcons";
             }
+
+            // -------------------------------------------------
+            // Structural conjuncts
+            // -------------------------------------------------
 
             for (const auto &dc : unit.conjuncts) {
               const auto *consonant = mapping.consonant(dc.value.key);
@@ -65,8 +93,15 @@ void print_structure(const okkhor::Mapping &mapping,
                 std::cout << "?";
               }
 
+              // Accents belong to this conjunct.
+              print_accents(mapping, dc.value.accents);
+
               std::cout << ")";
             }
+
+            // -------------------------------------------------
+            // Dependent vowel
+            // -------------------------------------------------
 
             if (unit.vowel) {
               const auto *vowel = mapping.vowel(unit.vowel->value.key);
@@ -79,22 +114,15 @@ void print_structure(const okkhor::Mapping &mapping,
                 std::cout << "?";
               }
 
-              std::cout << ")";
-            }
-
-            for (const auto &accent : unit.accents) {
-              const auto *entry = mapping.other(accent.key);
-
-              std::cout << " +accent(";
-
-              if (entry) {
-                std::cout << entry->canonical_key;
-              } else {
-                std::cout << "?";
-              }
+              // Accents belong to the vowel.
+              print_accents(mapping, unit.vowel->value.accents);
 
               std::cout << ")";
             }
+
+            // -------------------------------------------------
+            // Controls
+            // -------------------------------------------------
 
             if (unit.explicit_hasanta) {
               std::cout << " +hasanta";
@@ -109,8 +137,13 @@ void print_structure(const okkhor::Mapping &mapping,
             }
 
             std::cout << "]";
+          }
 
-          } else if constexpr (std::is_same_v<T, okkhor::IndependentVowel>) {
+          // -----------------------------------------------------
+          // Independent vowel
+          // -----------------------------------------------------
+
+          else if constexpr (std::is_same_v<T, okkhor::IndependentVowel>) {
             const auto *vowel = mapping.vowel(unit.value.key);
 
             std::cout << " [vowel(";
@@ -121,7 +154,10 @@ void print_structure(const okkhor::Mapping &mapping,
               std::cout << "?";
             }
 
-            std::cout << ")]";
+            // Accents belong to the Vowel.
+            print_accents(mapping, unit.value.accents);
+
+            std::cout << ")";
 
             if (unit.zwnj_after) {
               std::cout << " +zwnj";
@@ -131,7 +167,14 @@ void print_structure(const okkhor::Mapping &mapping,
               std::cout << " +zwj";
             }
 
-          } else if constexpr (std::is_same_v<T, okkhor::Literal>) {
+            std::cout << "]";
+          }
+
+          // -----------------------------------------------------
+          // Literal
+          // -----------------------------------------------------
+
+          else if constexpr (std::is_same_v<T, okkhor::Literal>) {
             std::cout << " [literal \"" << unit.text << "\"]";
           }
         },
@@ -142,14 +185,15 @@ void print_structure(const okkhor::Mapping &mapping,
 }
 
 void describe(const okkhor::Engine &engine, const std::string &input,
-              Direction direction) {
+              okkhor::WorkingDirection direction) {
   std::cout << "input       : " << input << "\n";
 
   // -----------------------------------------------------------------
   // Step 1: Tokenize
   // -----------------------------------------------------------------
 
-  std::vector<okkhor::Token> raw_tokens = engine.tokenize_input(input);
+  std::vector<okkhor::Token> raw_tokens =
+      engine.tokenize_input(input, direction);
 
   std::cout << "raw tokens  :";
   print_tokens(raw_tokens);
@@ -158,7 +202,7 @@ void describe(const okkhor::Engine &engine, const std::string &input,
   // Latin -> Bangla
   // -----------------------------------------------------------------
 
-  if (direction == Direction::LatinToBangla) {
+  if (direction == okkhor::WorkingDirection::Forward) {
 
     // Step 2: Apply Latin -> Bangla rules.
 
@@ -188,11 +232,10 @@ void describe(const okkhor::Engine &engine, const std::string &input,
 
   // Step 2: Apply reversible Bangla -> Latin rules.
 
-  std::vector<okkhor::Token> rewritten_tokens =
-      engine.bangla_to_latin_rules().apply(raw_tokens, engine.mapping());
+  // std::vector<okkhor::Token> rewritten_tokens =
+  //     engine.bangla_to_latin_rules().apply(raw_tokens, engine.mapping());
 
-  std::cout << "rule tokens :";
-  print_tokens(rewritten_tokens);
+  // print_tokens(rewritten_tokens);
 
   // Step 3: Parse into orthographic structure.
 
@@ -202,16 +245,21 @@ void describe(const okkhor::Engine &engine, const std::string &input,
 
   // Step 4: Render.
 
-  std::cout << "output      : " << engine.transliterate_bangla_to_latin(input)
-            << "\n";
+  std::string output = engine.transliterate_bangla_to_latin(input);
+
+  std::cout << "output: " << output << "\n";
 }
 
 } // namespace
 
+using namespace okkhor;
+
 int main(int argc, char **argv) {
   std::string data_dir;
   bool verbose = false;
-  Direction direction = Direction::LatinToBangla;
+
+  WorkingDirection direction = WorkingDirection::Forward;
+
   std::vector<std::string> words;
 
   for (int i = 1; i < argc; ++i) {
@@ -219,13 +267,10 @@ int main(int argc, char **argv) {
 
     if (arg == "--data" && i + 1 < argc) {
       data_dir = argv[++i];
-
     } else if (arg == "--tokens" || arg == "-v") {
       verbose = true;
-
     } else if (arg == "--reverse" || arg == "-r") {
-      direction = Direction::BanglaToLatin;
-
+      direction = WorkingDirection::Reverse;
     } else if (arg == "--help" || arg == "-h") {
       std::cout << "usage: okkhor "
                 << "[--data DIR] "
@@ -240,13 +285,13 @@ int main(int argc, char **argv) {
                 << "--data DIR: load external data from DIR\n";
 
       return 0;
-
     } else {
       words.push_back(arg);
     }
   }
 
   try {
+
     // No --data:
     //     use JSON data embedded in the executable.
     //
@@ -269,6 +314,7 @@ int main(int argc, char **argv) {
       std::string joined;
 
       for (std::size_t i = 0; i < words.size(); ++i) {
+
         if (i) {
           joined += ' ';
         }
@@ -278,10 +324,8 @@ int main(int argc, char **argv) {
 
       if (verbose) {
         describe(*engine, joined, direction);
-
-      } else if (direction == Direction::LatinToBangla) {
+      } else if (direction == WorkingDirection::Forward) {
         std::cout << engine->transliterate_latin_to_bangla(joined) << "\n";
-
       } else {
         std::cout << engine->transliterate_bangla_to_latin(joined) << "\n";
       }
@@ -297,18 +341,15 @@ int main(int argc, char **argv) {
 
     while (std::getline(std::cin, line)) {
       if (verbose) {
-       describe(*engine, line, direction);
-
-      } else if (direction == Direction::LatinToBangla) {
+        describe(*engine, line, direction);
+      } else if (direction == WorkingDirection::Forward) {
         std::cout << engine->transliterate_latin_to_bangla(line) << "\n";
-
       } else {
         std::cout << engine->transliterate_bangla_to_latin(line) << "\n";
       }
     }
 
     return 0;
-
   } catch (const std::exception &e) {
     std::cerr << "okkhor: " << e.what() << "\n";
 

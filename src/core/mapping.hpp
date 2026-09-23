@@ -3,14 +3,28 @@
 // Phase 0: data-driven mapping tables (data/*.json).
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <bitset>
 
 #include "core/token.hpp"
 #include "util/json.hpp"
 
 namespace okkhor {
+
+enum class Direction : uint8_t {
+  None = 0,
+  Forward = 1 << 0,
+  Reverse = 1 << 1,
+  Both = Forward | Reverse
+};
+
+constexpr bool supports(Direction available, Direction requested) {
+  return (static_cast<uint8_t>(available) & static_cast<uint8_t>(requested)) !=
+         0;
+}
 
 struct VowelEntry {
   std::string canonical_key; // canonical Latin key
@@ -35,6 +49,7 @@ struct OtherEntry {
 // What a matched Latin key means.
 struct Rule {
   TokenType type = TokenType::Unknown;
+  Direction direction = Direction::Both;
   std::string canonical_key;
   std::string value;
   std::string literal;
@@ -50,7 +65,7 @@ public:
                       const json::Value &punctuation_json);
 
   // Looks up a Latin key, including aliases.
-  const Rule *lookup(const std::string &key) const;
+  const Rule *lookup(const std::string &key, Direction direction) const;
 
   std::size_t max_key_length() const { return max_key_len_; }
 

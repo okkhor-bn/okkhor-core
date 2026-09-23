@@ -5,7 +5,6 @@
 
 namespace okkhor::latin_to_bangla {
 
-
 void RuleEngine::load(const json::Value &doc, Mapping &mapping) {
   if (!doc.is_object())
     throw std::runtime_error("Invalid rulebook format: expected JSON object");
@@ -20,8 +19,9 @@ void RuleEngine::load(const json::Value &doc, Mapping &mapping) {
     if (!rule_array.is_array())
       continue;
 
-    if (!mapping.lookup(key)) {
-      mapping.add_rule(key, Rule{TokenType::Special, "", key});
+    if (!mapping.lookup(key, Direction::Forward)) {
+      mapping.set_rule(key,
+                       Rule{TokenType::Special, Direction::Forward, "", key});
     }
 
     std::vector<ContextRule> parsed_rules;
@@ -128,10 +128,12 @@ std::vector<Token> RuleEngine::apply(const std::vector<Token> &tokens,
             last_type = TokenType::Unknown;
           } else if (rule.action.type == Action::Type::TokenList) {
             for (const std::string &sub_latin : rule.action.token_values) {
-              const Rule *m_rule = mapping.lookup(sub_latin);
+              const Rule *m_rule =
+                  mapping.lookup(sub_latin, Direction::Forward);
 
               if (m_rule) {
-                const Rule *c_rule = mapping.lookup(m_rule->canonical_key);
+                const Rule *c_rule =
+                    mapping.lookup(m_rule->canonical_key, Direction::Forward);
                 Token sub_t;
 
                 sub_t.type = m_rule->type;

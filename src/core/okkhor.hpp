@@ -55,8 +55,9 @@ public:
   // Shared tokenization
   // -------------------------------------------------------------
 
-  std::vector<Token> tokenize_input(const std::string &input) const {
-    return tokenize(input, mapping_);
+  std::vector<Token> tokenize_input(const std::string &input,
+                                    WorkingDirection direction) const {
+    return tokenize(input, mapping_, direction);
   }
 
   // -------------------------------------------------------------
@@ -64,7 +65,8 @@ public:
   // -------------------------------------------------------------
 
   Document analyze_latin_to_bangla(const std::string &input) const {
-    std::vector<Token> raw_tokens = tokenize(input, mapping_);
+    std::vector<Token> raw_tokens =
+        tokenize(input, mapping_, WorkingDirection::Forward);
     std::vector<Token> rewritten_tokens =
         latin_to_bangla_rules_.apply(raw_tokens, mapping_);
     return latin_to_bangla::parse(rewritten_tokens, mapping_);
@@ -80,10 +82,11 @@ public:
 
   std::vector<Token>
   analyze_bangla_to_latin_tokens(const std::string &input) const {
-    std::vector<Token> raw_tokens = tokenize(input, mapping_);
+    std::vector<Token> raw_tokens =
+        tokenize(input, mapping_, WorkingDirection::Reverse);
 
-    std::vector<Token> rewritten_tokens =
-        bangla_to_latin_rules_.apply(raw_tokens, mapping_);
+    std::vector<Token> rewritten_tokens = raw_tokens;
+    // bangla_to_latin_rules_.apply(raw_tokens, mapping_);
 
     return rewritten_tokens;
   }
@@ -94,8 +97,13 @@ public:
     return bangla_to_latin::parse(rewritten_tokens, mapping_);
   }
 
+  std::string analyze_bangla_to_latin_string(const std::string &input) const {
+    return bangla_to_latin_rules_.apply(input);
+  }
+
   std::string transliterate_bangla_to_latin(const std::string &input) const {
-    return bangla_to_latin_renderer_.render(analyze_bangla_to_latin(input));
+    return analyze_bangla_to_latin_string(
+        bangla_to_latin_renderer_.render(analyze_bangla_to_latin(input)));
   }
 
   // -------------------------------------------------------------
