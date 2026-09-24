@@ -1,3 +1,5 @@
+![logo](https://github.com/okkhor-bn/okkhor-core/blob/main/asset/okkhor.jpg)
+
 # Okkhor
 
 **Okkhor** is a rule-based Bangla phonetic transliteration engine.
