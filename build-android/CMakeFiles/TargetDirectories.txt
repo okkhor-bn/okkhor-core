@@ -1,0 +1,7 @@
+E:/programming/okkhor-core/build-android/CMakeFiles/okkhor_core.dir
+E:/programming/okkhor-core/build-android/CMakeFiles/okkhor.dir
+E:/programming/okkhor-core/build-android/CMakeFiles/engine_tests.dir
+E:/programming/okkhor-core/build-android/CMakeFiles/okkhor_android.dir
+E:/programming/okkhor-core/build-android/CMakeFiles/test.dir
+E:/programming/okkhor-core/build-android/CMakeFiles/edit_cache.dir
+E:/programming/okkhor-core/build-android/CMakeFiles/rebuild_cache.dir
