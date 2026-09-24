@@ -1,12 +1,13 @@
 #include <string>
+#include <okkhor/okkhor.hpp>
 
-#include "core/okkhor.hpp"
 #include "test_util.hpp"
+
 
 using namespace testing;
 
-#define TEST_ROUND_TRIP( text)                                            \
-  check("Round trip: " #text,                                                   \
+#define TEST_ROUND_TRIP(text)                                                  \
+  check("Round trip: " #text,                                                  \
         engine.transliterate_latin_to_bangla(                                  \
             engine.transliterate_bangla_to_latin(text)),                       \
         text)
@@ -652,7 +653,8 @@ int main() {
   // Original hard cases
   // -------------------------------------------------------------------------
 
-  const std::string hard = "ক্ষ্ম্যজ্ঞ্যন্ত্‌র্য্যশ্চ্ছ্বঙ্ক্ষ্ট্র্দ্ধ্ব্যাঁক্‌ন্‌ম্গ্ন্ত্র্যৌক"
+  const std::string hard = "ক্ষ্ম্যজ্ঞ্যন্ত্‌র্য্যশ্চ্ছ্বঙ্ক্ষ্ট্র্দ্ধ্ব্যাঁক্‌ন্‌ম্গ্ন্ত্র্যৌ"
+                           "ক"
                            "্"
                            "ক"
                            "্"
@@ -683,13 +685,12 @@ int main() {
             engine.transliterate_bangla_to_latin(hard + soft)),
         hard + soft);
 
-TEST_ROUND_TRIP("नमस्ते");
-TEST_ROUND_TRIP("हिन्दी");
-TEST_ROUND_TRIP("भारत");
-TEST_ROUND_TRIP("வணக்கம்");
-TEST_ROUND_TRIP("தமிழ்");
-TEST_ROUND_TRIP("e\u0301");
-
+  TEST_ROUND_TRIP("नमस्ते");
+  TEST_ROUND_TRIP("हिन्दी");
+  TEST_ROUND_TRIP("भारत");
+  TEST_ROUND_TRIP("வணக்கம்");
+  TEST_ROUND_TRIP("தமிழ்");
+  TEST_ROUND_TRIP("e\u0301");
 
   // -------------------------------------------------------------------------
   // Final report

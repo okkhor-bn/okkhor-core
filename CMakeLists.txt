@@ -12,7 +12,6 @@ else()
     add_compile_options(-Wall -Wextra)
 endif()
 
-
 # ------------------------------------------------------------
 # Data files
 # ------------------------------------------------------------
@@ -29,14 +28,11 @@ set(OKKHOR_DATA_FILES
     "${OKKHOR_DEFAULT_DATA_DIR}/rules.json"
 )
 
-# Tell CMake to re-run configuration whenever one of the
-# JSON data files changes.
 set_property(
     DIRECTORY APPEND
     PROPERTY CMAKE_CONFIGURE_DEPENDS
     ${OKKHOR_DATA_FILES}
 )
-
 
 # ------------------------------------------------------------
 # Generate embedded default data header
@@ -81,15 +77,14 @@ configure_file(
     @ONLY
 )
 
-
 # ------------------------------------------------------------
 # Core library
 # ------------------------------------------------------------
 
 add_library(okkhor_core
+    src/core/engine.cpp
     src/core/mapping.cpp
     src/core/orthography.cpp
-    src/core/okkhor.cpp
     src/core/tokenizer.cpp
 
     src/util/json.cpp
@@ -107,25 +102,12 @@ add_library(okkhor_core
 
 target_include_directories(okkhor_core
     PUBLIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/src"
-    "${OKKHOR_GENERATED_DIR}"
-)
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${OKKHOR_GENERATED_DIR}"
 
-
-# ------------------------------------------------------------
-# CLI
-# ------------------------------------------------------------
-
-add_executable(okkhor
-    src/main.cpp
-)
-
-target_link_libraries(
-    okkhor
     PRIVATE
-    okkhor_core
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
-
 
 # ------------------------------------------------------------
 # Tests
@@ -141,13 +123,13 @@ add_executable(
 target_link_libraries(
     engine_tests
     PRIVATE
-    okkhor_core
+        okkhor_core
 )
 
 target_include_directories(
     engine_tests
     PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/tests"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests"
 )
 
 add_test(
