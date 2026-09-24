@@ -1,118 +1,387 @@
 # Okkhor
 
-An Avro-like Bangla phonetic input engine built on an algebraic orthographic
-model rather than on a table of word mappings.
+**Okkhor** is a rule-based Bangla phonetic transliteration engine.
+
+It converts Bangla written in Latin characters into Bangla script and can also transliterate Bangla back into Latin characters.
+
+Okkhor is designed to provide a consistent and extensible phonetic input system for applications, keyboards, and other input tools.
+
+---
+
+## Usage
+
+Okkhor accepts Latin phonetic text and produces Bangla text.
+
+For example:
 
 ```text
-Latin phonetic input
-        ↓  tokenizer      (src/tokenizer.*)      longest-match over data/*.json
-semantic phonetic tokens
-        ↓  parser         (src/parser.*)         calls the algebra, never Unicode
-algebraic Bengali structure
-        ↓  algebra        (src/orthography.*)    OrthographicUnit, ids only
-internal representation
-        ↓  renderer       (src/renderer.*)       the only layer that knows Unicode
-Bangla UTF-8
+amar sonar bangla
 ```
 
-## Build
-
-```sh
-cmake -S . -B build
-cmake --build build
-ctest --test-dir build --output-on-failure
-```
-
-The mapping data is copied next to the binary; the executable also honours
-`--data <dir>` and the `OKKHOR_DATA` environment variable.
-
-## Use
-
-```sh
-./build/okkhor kta            # ক্তা
-./build/okkhor --tokens kta   # tokens + internal structure + output
-./build/okkhor                # reads stdin line by line
-```
-
-## The algebra
-
-The equations in the specification are the source of truth, and the code is a
-direct transcription of them:
-
-| equation                    | implementation                                                    |
-| --------------------------- | ----------------------------------------------------------------- |
-| `C → BC + H + অ`            | `make_consonant` (the inherent `অ` is a state, never a character) |
-| `C + V → BC + DV`           | `add_vowel`                                                       |
-| `C + C → BC + DC + VN`      | `add_consonant`                                                   |
-| `C…C + V → BC + DC…DC + DV` | repeated `add_consonant`, then `add_vowel`                        |
-| `C + ,, → BC + H`           | `terminate_with_hasanta`                                          |
-| `` ` `` ` → VC`             | `make_virtual_consonant`                                          |
-| `` ` `` ` + V → VC + DV`    | `make_virtual_consonant` + `add_vowel`                            |
-| `H + অ → VN`                | the dependent form of `o` is the empty string in `vowels.json`    |
-
-The algebraic operations return `false` when they are not defined for a unit in
-its current state (a second vowel, a consonant after a vowel, anything after an
-explicit hasanta or a ZWNJ). The parser reads that as "close this unit and open
-a new one", which is the whole of its cluster-boundary logic — there are no
-per-word or per-conjunct rules anywhere in the code.
-
-Conjuncts of any length fall out of this for free: `strI` → স্ত্রী,
-`kkhr` → ক্খ্র.
-
-## Fola
-
-Fola is not a structural type. It is `dcons = hosonto + bcons` like any other
-dependent consonant; the renderer may substitute a fola rendering when the data
-supplies one. In `consonants.json` that is the optional `"fola"` field, present
-on `r`, `z`, `b`, `m`, `l`. In Unicode these happen to be the same code point
-sequence as the default rendering (the font does the shaping), so the field is
-mostly a hook for renderers or scripts where they differ.
-
-## The `o` vowel
-
-Deliberately, and unlike Avro:
+becomes:
 
 ```text
-o   → অ          ko  → ক
-O   → ও          kO  → কো
-oi  → অই         koi → কই
+আমার সোনার বাংলা
 ```
 
-`o` is the vowel of the inherent `অ`; its dependent form is empty, so
-`hosonto + অ → vn` is data, not a special case in the code.
-
-## Data
+Another example:
 
 ```text
-data/vowels.json       latin → { id, ind, dep }
-data/consonants.json   latin → { id, base, fola? }
-data/controls.json     hasanta (",,"), zwnj ("|"), virtual ("`"), accents
-data/punctuation.json  latin → replacement
+ami banglay gan gai
 ```
 
-Ids must be dense and unique within a table; the loader rejects duplicates and
-duplicate Latin keys across all four files. Unknown input is never discarded —
-whitespace, punctuation and anything unrecognised close the current unit and
-pass through verbatim (digits are not mapped by default; add them to
-`punctuation.json` if you want ০-৯).
-
-## Deliberately absent
-
-No spelling correction, dictionary, fuzzy matching, frequency heuristics or
-prediction. Those belong in a layer above this deterministic core. Phase 7
-(richer Avro-compatible phonetic rules) should be built by extending the
-mapping data and the tokenizer, not by adding word rules to the parser.
-
-## Layout
+becomes:
 
 ```text
-CMakeLists.txt
-data/      vowels.json  consonants.json  controls.json  punctuation.json
-src/       json.*  mapping.*  tokenizer.*  orthography.*  parser.*  renderer.*
-           okkhor.*  main.cpp
-tests/     algebra_tests.cpp   (algebra + internal representation, no phonetics)
-           phonetic_tests.cpp  (end-to-end Latin → Bangla)
+আমি বাংলায় গান গাই
 ```
 
-`src/json.*` is a ~200-line JSON reader so the project has no third-party
-dependencies.
+Okkhor is phonetic rather than a character-by-character replacement system. The same Latin character can produce different Bangla characters depending on its position and surrounding characters.
+
+---
+
+# API
+
+Okkhor provides a simple C++ API through the `okkhor::Engine` class.
+
+Include the public header:
+
+```cpp
+#include <okkhor/okkhor.hpp>
+```
+
+## Creating an Engine
+
+For normal usage, create an engine using the default constructor:
+
+```cpp
+okkhor::Engine engine;
+```
+
+The engine will use Okkhor's built-in default mappings and rules.
+
+### Latin → Bangla
+
+Call:
+
+```cpp
+std::string result =
+    engine.transliterate_latin_to_bangla("amar sonar bangla");
+```
+
+The result will contain:
+
+```text
+আমার সোনার বাংলা
+```
+
+A complete example:
+
+```cpp
+#include <okkhor/okkhor.hpp>
+#include <iostream>
+
+int main()
+{
+    okkhor::Engine engine;
+
+    std::string result =
+        engine.transliterate_latin_to_bangla(
+            "amar sonar bangla"
+        );
+
+    std::cout << result << '\n';
+}
+```
+
+### Bangla → Latin
+
+Use:
+
+```cpp
+std::string result =
+    engine.transliterate_bangla_to_latin("আমার সোনার বাংলা");
+```
+
+A complete example:
+
+```cpp
+#include <okkhor/okkhor.hpp>
+#include <iostream>
+
+int main()
+{
+    okkhor::Engine engine;
+
+    std::string result =
+        engine.transliterate_bangla_to_latin(
+            "আমার সোনার বাংলা"
+        );
+
+    std::cout << result << '\n';
+}
+```
+
+---
+
+# Custom Data Directory
+
+Okkhor can optionally load its mappings and rules from a data directory instead of using the built-in defaults.
+
+Create an engine by passing the path to your data directory:
+
+```cpp
+okkhor::Engine engine("path/to/data");
+```
+
+The directory should contain Okkhor's data files:
+
+```text
+data/
+├── vowels.json
+├── consonants.json
+├── controls.json
+├── punctuation.json
+└── rules.json
+```
+
+For example:
+
+```cpp
+okkhor::Engine engine("./my-okkhor-data");
+
+std::string result =
+    engine.transliterate_latin_to_bangla(
+        "amar sonar bangla"
+    );
+```
+
+The custom data directory allows applications or users to **modify Okkhor's transliteration behavior** without changing the engine itself.
+
+You can customize things such as:
+
+* vowel mappings
+* consonant mappings
+* controls
+* punctuation
+* transliteration rules
+
+The exact behavior of Okkhor is therefore determined by the combination of its transliteration engine and its data.
+
+If no data directory is supplied, Okkhor uses its built-in default data.
+
+---
+
+# Transliteration Algorithm
+
+Okkhor uses a **token-based, rule-driven transliteration algorithm**.
+
+The process can be represented as:
+
+```text
+Latin Input
+     │
+     ▼
+  Tokenization
+     │
+     ▼
+ Rule Processing
+     │
+     ▼
+  Orthographic
+    Parsing
+     │
+     ▼
+   Rendering
+     │
+     ▼
+Bangla Output
+```
+
+## 1. Tokenization
+
+The input is first divided into meaningful tokens.
+
+Instead of immediately converting each Latin character independently, Okkhor identifies units such as:
+
+* consonants
+* vowels
+* vowel signs
+* controls
+* punctuation
+* whitespace
+* other input characters
+
+This allows Okkhor to process sequences of characters according to their context.
+
+For example, a consonant followed by a vowel is not necessarily rendered as two independent characters. Its representation depends on where it occurs and how it interacts with the surrounding tokens.
+
+---
+
+## 2. Rule Processing
+
+After tokenization, Okkhor applies its transliteration rules.
+
+Rules determine how phonetic sequences behave according to their context.
+
+For example, a vowel may need to become:
+
+* an independent Bangla vowel when it begins a syllable or word
+* a dependent vowel sign when it follows a consonant
+
+Consonant sequences may also require a **হসন্ত (্)** or form conjunct consonants.
+
+The rule system therefore considers the sequence of tokens rather than performing simple character substitution.
+
+---
+
+## 3. Orthographic Parsing
+
+The processed tokens are interpreted as Bangla orthographic structures.
+
+This stage determines how the phonetic components should be represented according to Bangla writing conventions.
+
+For example, the same vowel sound can have different written representations depending on whether it occurs independently or after a consonant.
+
+This stage is responsible for turning the phonetic representation into structures that correspond to actual Bangla orthography.
+
+---
+
+## 4. Rendering
+
+The resulting orthographic structure is finally rendered as Unicode Bangla text.
+
+For example:
+
+```text
+ami
+```
+
+is processed through the transliteration pipeline before becoming:
+
+```text
+আমি
+```
+
+Okkhor therefore does not simply perform:
+
+```text
+a → আ
+m → ম
+i → ই
+```
+
+Instead, it determines the appropriate Bangla orthographic representation from the complete sequence.
+
+---
+
+# Bangla → Latin
+
+Okkhor also supports reverse transliteration.
+
+The reverse process works conceptually as:
+
+```text
+Bangla Input
+     │
+     ▼
+  Tokenization
+     │
+     ▼
+ Orthographic
+    Parsing
+     │
+     ▼
+   Rendering
+     │
+     ▼
+Latin Output
+```
+
+For example:
+
+```text
+আমার সোনার বাংলা
+```
+
+can be converted into:
+
+```text
+amar sonar bangla
+```
+
+The reverse direction uses Bangla orthographic structures to determine their corresponding Latin representation.
+
+---
+
+# Rule-Based Design
+
+Okkhor's transliteration behavior is defined by **mapping data and rules** rather than being entirely hard-coded into the engine.
+
+Conceptually:
+
+```text
+Input
+  │
+  ▼
+Tokens
+  │
+  ▼
+Mappings + Rules
+  │
+  ▼
+Orthographic Structure
+  │
+  ▼
+Output
+```
+
+This makes Okkhor configurable.
+
+The default behavior is provided by Okkhor's built-in data, while applications can provide their own data directory when they need different mappings or rules.
+
+---
+
+# Phonetic Input
+
+Okkhor is intended for users who type Bangla using Latin characters based on pronunciation.
+
+For example:
+
+```text
+ami banglay kotha boli
+```
+
+produces:
+
+```text
+আমি বাংলায় কথা বলি
+```
+
+The goal is to allow users to type Bangla using familiar Latin characters without requiring them to memorize Unicode codes or a traditional Bangla keyboard layout.
+
+---
+
+# Okkhor Ecosystem
+
+Okkhor Core is the transliteration engine used by different Okkhor input applications.
+
+```text
+                 Okkhor Core
+                      │
+          ┌───────────┼───────────┐
+          │           │           │
+          ▼           ▼           ▼
+         CLI       Android      Windows
+                    Keyboard     Input
+```
+
+The core focuses on transliteration, while each application provides its own user interface and platform-specific input behavior.
+
+---
+
+## Status
+
+Okkhor is under active development.
+
+The transliteration rules and orthographic behavior are continuously being refined to improve phonetic input and produce natural Bangla text.
