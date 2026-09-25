@@ -93,6 +93,7 @@
         }
       }
     ],
+
     "W": [
       {
         "reversible": false,
@@ -134,13 +135,26 @@
 
     "``": [
       {
-        "desc": "; bypassing zwnj",
+        "desc": "; bypassing consonant placeholder",
         "when": {
           "always": true
         },
         "action": {
           "type": "literal",
           "value": "`"
+        }
+      }
+    ],
+
+    "...": [
+      {
+        "desc": "... bypassing .dari",
+        "when": {
+          "always": true
+        },
+        "action": {
+          "type": "literal",
+          "value": "..."
         }
       }
     ],
