@@ -81,6 +81,16 @@
           "type": "token",
           "value": ["b"]
         }
+      },
+      {
+        "reversible": false,
+        "when": {
+          "after-vowel": true
+        },
+        "action": {
+          "type": "token",
+          "value": ["y"]
+        }
       }
     ],
 
@@ -106,6 +116,19 @@
         "action": {
           "type": "literal",
           "value": ";"
+        }
+      }
+    ],
+
+    "``": [
+      {
+        "desc": "; bypassing zwnj",
+        "when": {
+          "always": true
+        },
+        "action": {
+          "type": "literal",
+          "value": "`"
         }
       }
     ],

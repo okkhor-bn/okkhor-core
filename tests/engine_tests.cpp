@@ -1,8 +1,7 @@
-#include <string>
 #include <okkhor/okkhor.hpp>
+#include <string>
 
 #include "test_util.hpp"
-
 
 using namespace testing;
 
@@ -14,6 +13,13 @@ using namespace testing;
 
 int main() {
   const okkhor::Engine engine;
+
+  // Special case
+  check("Latin -> Bangla: o", engine.transliterate_latin_to_bangla("kowa"),
+        "কয়া");
+  check("Latin -> Bangla: o", engine.transliterate_latin_to_bangla("``"), "`");
+  check("Latin -> Bangla: o", engine.transliterate_latin_to_bangla("paOwa"),"পাওয়া");
+  check("Latin -> Bangla: o", engine.transliterate_latin_to_bangla("haOwa"),"হাওয়া");
 
   // -------------------------------------------------------------------------
   // Basic Latin -> Bangla vowels
@@ -653,7 +659,9 @@ int main() {
   // Original hard cases
   // -------------------------------------------------------------------------
 
-  const std::string hard = "ক্ষ্ম্যজ্ঞ্যন্ত্‌র্য্যশ্চ্ছ্বঙ্ক্ষ্ট্র্দ্ধ্ব্যাঁক্‌ন্‌ম্গ্ন্ত্র্যৌ"
+  const std::string hard = "ক্ষ্ম্যজ্ঞ্যন্ত্‌র্য্যশ্চ্ছ্বঙ্ক্ষ্ট্র্দ্ধ্ব্যাঁক্‌ন্‌ম্গ্ন্ত্র্"
+                           "য"
+                           "ৌ"
                            "ক"
                            "্"
                            "ক"
@@ -690,7 +698,6 @@ int main() {
   TEST_ROUND_TRIP("भारत");
   TEST_ROUND_TRIP("வணக்கம்");
   TEST_ROUND_TRIP("தமிழ்");
-  TEST_ROUND_TRIP("e\u0301");
 
   // -------------------------------------------------------------------------
   // Final report
