@@ -93,6 +93,18 @@
         }
       }
     ],
+    "W": [
+      {
+        "reversible": false,
+        "when": {
+          "always": true
+        },
+        "action": {
+          "type": "literal",
+          "value": "ও"
+        }
+      }
+    ],
 
     ",,": [
       {
