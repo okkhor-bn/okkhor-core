@@ -1,4 +1,10 @@
-![logo](https://github.com/okkhor-bn/okkhor-core/blob/main/asset/okkhor.jpg)
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/okkhor-bn/okkhor-core/refs/heads/main/asset/okkhor-banner.svg"
+    width="50%"
+    alt="Okkhor"
+  />
+</p>
 
 # Okkhor
 
@@ -162,11 +168,11 @@ The custom data directory allows applications or users to **modify Okkhor's tran
 
 You can customize things such as:
 
-* vowel mappings
-* consonant mappings
-* controls
-* punctuation
-* transliteration rules
+- vowel mappings
+- consonant mappings
+- controls
+- punctuation
+- transliteration rules
 
 The exact behavior of Okkhor is therefore determined by the combination of its transliteration engine and its data.
 
@@ -206,13 +212,13 @@ The input is first divided into meaningful tokens.
 
 Instead of immediately converting each Latin character independently, Okkhor identifies units such as:
 
-* consonants
-* vowels
-* vowel signs
-* controls
-* punctuation
-* whitespace
-* other input characters
+- consonants
+- vowels
+- vowel signs
+- controls
+- punctuation
+- whitespace
+- other input characters
 
 This allows Okkhor to process sequences of characters according to their context.
 
@@ -228,8 +234,8 @@ Rules determine how phonetic sequences behave according to their context.
 
 For example, a vowel may need to become:
 
-* an independent Bangla vowel when it begins a syllable or word
-* a dependent vowel sign when it follows a consonant
+- an independent Bangla vowel when it begins a syllable or word
+- a dependent vowel sign when it follows a consonant
 
 Consonant sequences may also require a **হসন্ত (্)** or form conjunct consonants.
 
